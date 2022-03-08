@@ -1,0 +1,6 @@
+sqlalchemy~=1.4.31
+falcon~=3.0.1
+cython~=0.29.28
+gunicorn~=20.1.0
+psycopg2-binary~=2.9.3
+sqlalchemy-utils~=0.38.2

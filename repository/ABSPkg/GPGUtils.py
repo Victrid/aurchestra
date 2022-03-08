@@ -10,7 +10,7 @@ from ABSPkg import env
 class GPG:
     def __init__(self):
         self.gpg_path = env.GPG_path
-        self.gpg_home = env.GPG_home
+        self.gpg_home = os.path.join(env.GPG_home, "pid-{}".format(os.getpid()))
         self.private_key_file = env.GPG_private_key_file
 
         self.init_gpg_home()

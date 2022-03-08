@@ -50,5 +50,5 @@ class RepositoryHandler:
         update_database(session, self.storage_engine)
         session.close()
         resp.status_code = 200
-        resp.body = "Repository updated"
+        resp.text = "Repository updated"
         return

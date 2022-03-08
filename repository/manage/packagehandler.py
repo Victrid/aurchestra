@@ -34,8 +34,8 @@ class PackageHandler:
         session.add(pending_package)
         session.commit()
         session.close()
-        resp.status = '200 OK'
-        resp.body = 'Package uploaded'
+        resp.status_code = 200
+        resp.text = 'Package uploaded'
         return
 
     def on_delete(self, req, resp):
@@ -68,5 +68,5 @@ class PackageHandler:
         session.commit()
         session.close()
         resp.status_code = 204
-        resp.body = 'Package deleted'
+        resp.text = 'Package deleted'
         return

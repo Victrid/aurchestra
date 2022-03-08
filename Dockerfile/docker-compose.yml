@@ -1,0 +1,34 @@
+version: '2'
+services:
+  repo:
+    build:
+        dockerfile: ./Dockerfile/Repository.dockerfile
+        context: ../
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      -  repo:/var/www/aurchestra
+      -  /home/victrid/test.gpg:/etc/aurchestra/private.key
+    environment:
+      AURCHESTRA_DB_CONNECTION: "postgresql+psycopg2://exampleuser:examplepassword@db/repo"
+      AURCHESTRA_MV_PATH: "/bin/mv"
+      
+  db:
+    image: postgres:14.2-bullseye
+    restart: always
+    environment:
+      POSTGRES_USER: exampleuser
+      POSTGRES_PASSWORD: examplepassword
+      POSTGRES_DB: repo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U exampleuser -d repo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  repo:

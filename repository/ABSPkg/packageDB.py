@@ -42,10 +42,12 @@ class PackageDB:
             with open(os.path.join(files_dir, name, "files"), "w+") as f:
                 f.write(desc_file)
 
-        subprocess.run([bsdtar_path, "czf", os.path.join(package_name, "{}.db.tar.gz".format(repo_name)), "."],
-                       cwd=db_dir
-                       )
-        subprocess.run([bsdtar_path, "czf", os.path.join(package_name, "{}.files.tar.gz".format(repo_name)), "."],
+        subprocess.run(
+                [bsdtar_path, "czf", os.path.join(package_name, "{}.db.tar.gz".format(repo_name)), *os.listdir(db_dir)],
+                cwd=db_dir
+                )
+        subprocess.run([bsdtar_path, "czf", os.path.join(package_name, "{}.files.tar.gz".format(repo_name)),
+                        *os.listdir(files_dir)],
                        cwd=files_dir
                        )
         subprocess.run(
@@ -53,7 +55,7 @@ class PackageDB:
                  os.path.join(package_name, "{}.files.tar.gz".format(repo_name)), web_dir]
                 )
         if not os.path.exists(os.path.join(web_dir, "{}.db".format(repo_name))):
-            subprocess.run(["ln", "-s","{}.db.tar.gz".format(repo_name),
+            subprocess.run(["ln", "-s", "{}.db.tar.gz".format(repo_name),
                             os.path.join(web_dir, "{}.db".format(repo_name))
                             ]
                            )

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+from Database import Base, init_db
 
 
 class Package(Base):
@@ -61,3 +61,6 @@ class PendingPackage(Base):
 
     def __str__(self):
         return "{}-{}:{}".format(self.package_ref.package.name, self.package_ref.version, self.package_ref.created_at)
+
+
+init_db()
