@@ -1,0 +1,19 @@
+version: '2'
+services:
+  vsftpd:
+    image: million12/vsftpd
+    restart: always
+    volumes:
+      -  repo:/var/ftp/pub
+      -  /home/victrid/test.gpg:/etc/aurchestra/private.key
+    environment:
+      ANONYMOUS_ACCESS: true
+      LOG_STDOUT: true
+      FTP_USER: admin
+      FTP_PASS: test
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    restart: always
+
+volumes:
+  repo:
