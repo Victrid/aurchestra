@@ -1,10 +1,10 @@
-# Version: 0.0.1
 FROM archlinux
-RUN chmod -R 755 /etc 
+RUN echo 'Server = https://mirror.sjtu.edu.cn/archlinux/$repo/os/$arch' > /etc/pacman.d/mirrorlist
 RUN pacman -Syu --noconfirm
-RUN pacman -S binutils make gcc pkg-config fakeroot git sudo --noconfirm
+RUN pacman -S binutils make gcc pkg-config fakeroot git sudo devtools --noconfirm
 # 将创建一个non-root用户
 ENV NEWUSER soeo
 COPY setup.sh /${NEWUSER}/
 COPY worker.sh /${NEWUSER}/
-RUN /bin/bash /${NEWUSER}/setup.sh 
+# COPY receive_source_file /usr/bin/
+CMD /bin/bash /${NEWUSER}/setup.sh 

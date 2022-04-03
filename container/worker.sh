@@ -1,17 +1,43 @@
 #!/bin/bash
 # 创建一个input目录 用于接收消息队列的信息
-mkdir input 
-chmod 777 input
-cd input || exit
-# TODO receive()
-# sudo git clone https://aur.archlinux.org/endlessh-git.git
-sudo chmod -R 777 ./
-packageName=$(ls)
-cd "${packageName}" || exit
-timeout 600 makepkg -s --noconfirm &> PKGlog.log
-if [ $? -ne 0 ];
-then NULL # sendback(makepkg error) TODO
-fi 
+WORKDIR="$(pwd)"
+TIMEOUT=600
+ORIGINAL_IFS="${IFS}"
+# receive()
+# sudo receive_source_file
+# sudo tar xf source.tar.gz 
+# cd source
+git clone "https://aur.archlinux.org/endlessh-git.git"
+cd "endlessh-git" || exit
+
+
+getPackageName="$(makepkg --packagelist)"
+IFS=$'\n'
+packageName=("$getPackageName")
+IFS=$ORIGINAL_IFS
+for i in $(seq 0 $((${#packageName[@]}-1)));
+do
+    packageName[i]=${packageName[i]##*/}
+    echo "${packageName[i]}" >> packageName.log;
+done 
+
+sudo timeout $TIMEOUT extra-x86_64-build 2>CompileErr.log # use local source: extra-x86_64-build -- -- -se
+returnCode=$?
+if [ $returnCode -eq 124 ];
+then TimeoutErr=-1;
+else TimeoutErr=0;
+fi
+if [ $returnCode -ne 0 ];
+then echo -1 > FinalErr.log # FinalErr.log 格式为1个数表示成功失败 然后是报错信息
+    echo "Time out: ${TimeoutErr}" >> FinalErr.log
+    cat CompileErr.log >> FinalErr.log
+else echo 0 > FinalErr.log
+    for file in *.pkg.tar.zst-namcap.log;
+    do 
+        echo "Warnings: " >> FinalErr.log
+        cat "$file" >> FinalErr.log
+    done 
+fi
 for file in *.pkg.tar.zst;
 do 
     uploadSuccess=0
@@ -24,9 +50,10 @@ do
             break
         fi 
     done 
-    if [ ${uploadSuccess} -eq 1 ];
-    then NULL #sendback(success)
-    else NULL #sendback(uploadfail)
+    if [ ${uploadSuccess} -eq 0 ];
+    then echo -1 > FinalErr.log
+        echo "Upload failed" >> FinalErr.log
     fi 
+    # sendback(FinalErr.log)
 done 
 sudo rm -rf ./*
