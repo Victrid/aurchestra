@@ -1,9 +1,5 @@
 
-
-
 <script >
-import testDB from "./components/testDB.vue";
-import {ref} from 'vue'
 export default {
   name: "PackageApp",
   data() {
@@ -20,20 +16,10 @@ export default {
     };
   },
   mounted() {
-    // console.log("我来了");
-    // let api = "http://localhost:3000/arch/lists";
-    // this.axios
-    //   .get(api, {
-    //     headers: {
-    //       "Access-Control-Allow-Origin": "*",
-    //       "Content-type": "application/json",
-    //     },
-    //   })
-    //   .then((v) => console.log(v));
+
   },
   computed: {},
   components: {
-    testDB,
   },
   methods: {
     open(){
@@ -131,7 +117,8 @@ export default {
 .card{
   max-width: 60%;
   position: absolute;
-  left:38%;
+  left:35%;
+  top:20%;
   padding: 1%;
   opacity: 0.95;
 }
@@ -146,6 +133,5 @@ export default {
 }
 .card.input{
   font-size:20px
-  
 }
 </style>

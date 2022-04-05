@@ -1,6 +1,6 @@
 const { Sequelize } = require('sequelize');
 const { applyExtraSetup } = require('./extra-setup');
-const config = require('./db.config');
+const config = require('../config/db.config');
 
 const sequelize = new Sequelize(
     config.dbname,
@@ -14,7 +14,7 @@ const sequelize = new Sequelize(
 );
 
 const modelDefiners = [
-	// require('./models/admin.model'),
+	require('./models/admin.model'),
 	require('./models/package.model'),
 	// Add more models here...
 	// require('./models/item'),

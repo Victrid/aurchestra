@@ -22,7 +22,7 @@ module.exports = (sequelize) => {
             validate:{
                 isInt: true,
                 min: 0,
-                max: 3,
+                max: 7,
             }
         },
         email:{

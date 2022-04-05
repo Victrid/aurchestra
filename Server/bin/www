@@ -7,7 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('myapp:server');
 var http = require('http');
-
+var bcrypt = require('bcrypt')
 /**
  * Get port from environment and store in Express.
  */
@@ -19,22 +19,35 @@ app.set('port', port);
   */
 var sequelize = require('../sequelize');
 async function dbinit() {
-	console.log(`Checking database connection...`);
-	try {
-		await sequelize.authenticate();
-		console.log('Database connection OK!');
-	} catch (error) {
-		console.log('Unable to connect to the database:');
-		console.log(error.message);
-		process.exit(1);
-	}
+  console.log(`Checking database connection...`);
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection OK!');
+  } catch (error) {
+    console.log('Unable to connect to the database:');
+    console.log(error.message);
+    process.exit(1);
+  }
   console.log(`Starting Sequelize on port ${port}...`);
+
+  await sequelize.sync()
+    .then(() => {
+      console.log(`Database connected`);
+    });
+  if ((await sequelize.models.admin.count()).valueOf()==0){
+    //create a admin user
+    var salt = await bcrypt.genSalt(8);
+    var psd = await bcrypt.hash('admin', salt);
+    console.log(psd)
+    await sequelize.models.admin.create(
+      { username: 'admin',
+        password: psd}
+    )
+    console.log("initial admin...")
+  }
 }
 dbinit()
-sequelize.sync()
-  .then(() => {
-    console.log(`Database connected`);
-});
+
 
 
 /**

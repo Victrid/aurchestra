@@ -17,6 +17,7 @@ module.exports = (sequelize) => {
         password:{
             allowNull: false,
             type: DataTypes.STRING,
+            
         }
 	},{
         // instanceMethods: {
@@ -26,6 +27,8 @@ module.exports = (sequelize) => {
         //     validPassword(password) {
         //         return bcrypt.compare(password, this.password);
         //     }
-        // }
+        // },
+        timestamps: false,
+        freezeTableName: true
     });
 };
