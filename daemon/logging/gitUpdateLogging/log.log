@@ -1,0 +1,16 @@
+2022-04-06 17:41:55,966 - gitupdate - ERROR - Traceback (most recent call last):
+  File "/home/tpljqj/testDaemon/daemon/ConnectMQ.py", line 44, in push_path_to_MQ
+    sender.send(path)
+  File "/home/tpljqj/testDaemon/MQ/mq.py", line 21, in send
+    raise MakepkgConnectionError
+MQ.mq.MakepkgConnectionError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/tpljqj/testDaemon/daemon/CheckUpdateGit.py", line 39, in connect_to_MQ
+    push_path_to_MQ(itempath)
+  File "/home/tpljqj/testDaemon/daemon/ConnectMQ.py", line 52, in push_path_to_MQ
+    raise mq.MakepkgConnectionError
+MQ.mq.MakepkgConnectionError
+

@@ -1,0 +1,26 @@
+2022-04-06 17:36:47,333 - gitupdate - ERROR - Traceback (most recent call last):
+  File "/home/tpljqj/testDaemon/daemon/CheckUpdateGit.py", line 68, in check_warehouse_update
+    str = gitt.pull() #得到pull之后的信息，为一个字符串
+  File "/home/tpljqj/.local/lib/python3.9/site-packages/git/cmd.py", line 639, in <lambda>
+    return lambda *args, **kwargs: self._call_process(name, *args, **kwargs)
+  File "/home/tpljqj/.local/lib/python3.9/site-packages/git/cmd.py", line 1184, in _call_process
+    return self.execute(call, **exec_kwargs)
+  File "/home/tpljqj/.local/lib/python3.9/site-packages/git/cmd.py", line 984, in execute
+    raise GitCommandError(redacted_command, status, stderr_value, stdout_value)
+git.exc.GitCommandError: Cmd('git') failed due to: exit code(1)
+  cmdline: git pull
+  stderr: 'ssh: Could not resolve hostname github.com: Temporary failure in name resolution
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/tpljqj/testDaemon/daemon/CheckUpdateGit.py", line 30, in connect_to_MQ
+    path_list = self.check_warehouse_update()
+  File "/home/tpljqj/testDaemon/daemon/CheckUpdateGit.py", line 77, in check_warehouse_update
+    raise Exception
+Exception
+

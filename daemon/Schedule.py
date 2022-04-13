@@ -31,7 +31,7 @@ def schedule(sleeptime):
     sleep_time = sleeptime #轮询检查间隔时间
     CheckUpdateGit_model = CheckUpdateGit(sleep_time)
     CheckUpdateGit_Thread = threading.Thread(target=CheckUpdateGit_model.connect_to_MQ) #这里有问题，对于定时扫描的问题
-
+    
 
 
 
@@ -53,6 +53,6 @@ def schedule(sleeptime):
 
 if __name__ == "__main__":
 
-    sltime = 10
+    sltime = 60
     schedule(sltime)
     

@@ -1,14 +1,15 @@
 
+import traceback
 import git
 import os
 import shutil
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
+
 from env import IPWeb, portWeb,pkgs_path
 
-
-from ConnectMQ import push_path_to_MQ
-
+from ConnectMQ import push_path_to_MQ, deleteFromDatabase, queryLocalDatabase, deleteLocalDatabase,modifyDatabase
+from loggerWrite import myLogger
 
 '''
 功能：
@@ -18,14 +19,14 @@ from ConnectMQ import push_path_to_MQ
 
 TODO
 1.服务器地址 和 端口 问题
-2.错误处理问题
+2.错误处理问题, networkerror
 3.删除包问题
 '''
 
 
 #设置文件夹路径为全局变量
 
-
+weblogger = myLogger('web').getmyLogger()
 
 
 class myHandler(BaseHTTPRequestHandler):
@@ -37,31 +38,102 @@ class myHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
 
-        print(self.headers)
-        print(self.command)
+        #print(self.headers)
+        #print(self.command)
 
         req_datas = self.rfile.read(int(self.headers['content-length']))
-
-        #print("----------接收数据---------")
+        self.send_header('Content-type','text/html')
+        #self.send_header("Access-Control-Allow-Origin", "http://"+IPWeb+":"+str(portWeb))
+        self.send_header("*", "http://"+IPWeb+":"+str(portWeb))
+        self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+       
 
         res1 = req_datas.decode('utf-8') #解码
         res = json.loads(res1) #变成字典
         
-        #infolist = (list(res.values())[0]).split('&') #分割
+        if list(res.keys()) != ['name','address','state']:
+            self.send_response(503,"format error")
+        else:
+            
+            if res['state'] == 'wait': #需要下载的软件
+                self.send_response(201)
+                state = 2
+                try: #下载错误
+                    new_path = self.Add_software(res['name'],res['address'])
+                except Exception:
+                    state = 6
+                    weblogger.error("%s" %traceback.format_exc())
+                else: #下载成功
+                    try:
+                        
+                        push_path_to_MQ(new_path) #放入消息队列
+                    except Exception:
+                        weblogger.error("%s" %traceback.format_exc())
+                        state = 6
+                        #对刚才下载成功的目录进行删除
+                        shutil.rmtree(new_path)
+                    
+                try: #放入数据库，这里进行人为处理
+                    modifyDatabase(res['name'],state)
+                except Exception:
+                    weblogger.error("%s" %traceback.format_exc())
 
-        if res['state'] == 'wait': #需要下载的软件
-            new_path = self.Add_software(res['name'],res['address'])
-            push_path_to_MQ(new_path)
+                
 
-        elif res['state'] == 'delete': #需要删除的软件
-            self.Delete_software(res['name'])
+            elif res['state'] == 'delete': #需要删除的软件
+                self.send_response(201)
+
+                #删除本地目录
+                try:
+                    localpath = os.path.join(pkgs_path,res['name'])
+                    shutil.rmtree(localpath)
+                except Exception:
+                    weblogger.error("%s" %traceback.format_exc())
+                
+                else:
+                    #删除远程仓库
+                    try:
+                        self.Delete_compiled_Packge(res['name'])
+                    except Exception:
+                        weblogger.error("%s" %traceback.format_exc())
+                    else: 
+                        #删除本地数据库
+                        try:
+                            deleteLocalDatabase(res['name'])
+                        except Exception:
+                            weblogger.error("%s" %traceback.format_exc())     
+
+                        #删除前端数据库条目
+                        try:
+                            deleteFromDatabase(res['name'])
+                        except Exception:
+                            weblogger.error("%s" %traceback.format_exc())
+
+               
+                
+            else:
+                 self.send_response(503,"state error")  
+        self.end_headers()
 
 
+
+    def do_OPTIONS(self):
+        self.send_response(201,"ok")
+        self.send_header('Content-type','application/json')
+        self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+        #self.send_header('Access-Control-Allow-Origin', "http://"+IPWeb+":"+str(portWeb))
+        self.send_header('*', "http://"+IPWeb+":"+str(portWeb))
+        self.end_headers()
 
 
     def Add_software(self,name,address): #处理增加一个软件的情况，传入参数为包名，一个git地址和对应的存放包的上级文件夹路径
-        newrepo = git.Repo.clone_from(url=address,to_path=pkgs_path) #下载
-        
+
+        #下载失败
+        try:
+            newrepo = git.Repo.clone_from(url=address,to_path=os.path.join(pkgs_path,name)) #下载
+        except Exception:
+            raise Exception
+
         new_path = os.path.join(pkgs_path,name) #这里是存放包的位置加上包名就是包的路径
 
 
@@ -70,18 +142,24 @@ class myHandler(BaseHTTPRequestHandler):
 
         #y用于删除本地的软件对应的仓库和软件库
         #删除参数为对应的包的名字
-    def Delete_software(self,name):
+    def Delete_compiled_Packge(self,name):
         
+        #从本地数据库中查找出所有的需要的删除的包名
+
+        try:
+            pkgslist = queryLocalDatabase(name)
+        except Exception:
+            raise Exception
+        else:
+            #删除远程仓库
+            #TODO 
+            pass
         
-        #由于包名和packages_path之和就是这个包的路径
-        path = os.path.join(pkgs_path,name)
 
-        #删除对应的本地软件目录
-        shutil.rmtree(path) 
+ 
 
 
-        #删除远程仓库
-        #TODO 
+
 
 
        
@@ -108,5 +186,5 @@ def listener():
 
 
 if __name__ == "__main__":
-    packages_path = 'E:\\大三下\\软件工程\\大作业\\SEcode\\packages' #所有软件包的上级目录
+    listener()
     
