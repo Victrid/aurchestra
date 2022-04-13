@@ -4,12 +4,14 @@ import sys
 import os
 from tabnanny import verbose
 
-from keyring import delete_password
-#sys.paht.append("..") not working
+# from keyring import delete_password
+# sys.paht.append("..") not working
 sys.path.append(os.path.abspath(os.path.join(os.path.join(os.path.abspath(__file__), os.pardir),os.pardir))
 )
-#for env 
+# for env
 sys.path.append(os.path.abspath(os.path.join(os.path.abspath(__file__),os.pardir)))
+
+
 from MQ import mq
 
 from sqlalchemy import Column,String, create_engine,Integer,VARCHAR, CHAR
@@ -29,10 +31,11 @@ sender 地址问题
 
 
 
-#将地址推入队列
+# 将地址推入队列
+
 def push_path_to_MQ(path):
 
-    #TODO 
+    # TODO 
     sender = mq.MQSender(connection="amqp://user:passwd@somehost/somevh")
 
 
@@ -44,9 +47,9 @@ def push_path_to_MQ(path):
             sender.send(path) 
 
         except (mq.MakepkgConnectionError,
-                #mq.UploadError,
-                #pika.AMQPError, #no this attribute error
-                #pika.AMQPConnectionError
+                # mq.UploadError,
+                # pika.AMQPError, #no this attribute error
+                # pika.AMQPConnectionError
                 ):
             if maxerrornumber==0:
                 raise mq.MakepkgConnectionError               
@@ -67,6 +70,18 @@ def push_path_to_MQ(path):
 
     #modifyDatabase(name,state)       
     
+'''
+# 用于测试和前端的交互
+def push_path_to_MQ(path):
+    print(path)
+
+    # 通过修改a来抛出错误
+    a = 1
+    try:
+        b = 1/a
+    except Exception:
+        raise Exception
+'''
 
 
 # 修改数据库状态函数

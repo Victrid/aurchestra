@@ -39,6 +39,8 @@ class CheckUpdateGit(object):
                         push_path_to_MQ(itempath)
                     except Exception:
                         gitupdatelogger.error("%s" %traceback.format_exc())
+
+
                         #state = 6
                     # don't modify the database for updating, I just do it for my self
                     '''

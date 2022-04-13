@@ -31,15 +31,13 @@ def schedule(sleeptime):
     sleep_time = sleeptime #轮询检查间隔时间
     CheckUpdateGit_model = CheckUpdateGit(sleep_time)
     CheckUpdateGit_Thread = threading.Thread(target=CheckUpdateGit_model.connect_to_MQ) #这里有问题，对于定时扫描的问题
-    
 
-
-
+    print("守护中..........")
     ConnectWeb_Thread.start()
     ConnectDocker_Thread.start()
     CheckUpdateGit_Thread.start()
 
-    print("守护中..........")
+
     ConnectWeb_Thread.join()
     ConnectDocker_Thread.join()
     CheckUpdateGit_Thread.join()

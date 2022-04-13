@@ -17,9 +17,14 @@ class myLogger(object):
 
 if __name__ == '__main__':
 
-    weblogger = myLogger('web').getmyLogger()
-    gitloger = myLogger('gitupdate').getmyLogger()
-    dokerlogger = myLogger('docker').getmyLogger()
-    weblogger.error('fffff')
-    gitloger.error('fffff')
-    dokerlogger.error('fffff')
+    import time
+    while True:
+        weblogger = myLogger('web').getmyLogger()
+        gitloger = myLogger('gitupdate').getmyLogger()
+        dokerlogger = myLogger('docker').getmyLogger()
+        weblogger.error('fffff')
+        gitloger.error('fffff')
+        dokerlogger.error('fffff')
+        time.sleep(10)
+
+

@@ -18,7 +18,9 @@ class myHandler(BaseHTTPRequestHandler):
 
   
     def do_GET(self):
-        pass
+        self.send_response(200)
+        self.send_header('Content-type','text/html')
+        self.end_headers()
 
 
     def do_POST(self):
@@ -28,22 +30,24 @@ class myHandler(BaseHTTPRequestHandler):
 
         req_datas = self.rfile.read(int(self.headers['content-length']))
         self.send_header('Content-type','text/html')
-        self.send_header("Access-Control-Allow-Origin", "http://"+IPDocker+":"+str(portDocker))
+        self.send_header("Access-Control-Allow-Origin", "http://localhost:8998")
         #self.send_header("*", "http://"+IPDocker+":"+str(portDocker))
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 
+        self.send_response(201) 
         #print("----------接收数据---------")
         #这里接收的数据 name state
+        self.end_headers()
 
 
         res1 = req_datas.decode('utf-8') #解码
         res = json.loads(res1) #变成字典
 
         if list(res.keys()) != ['name','pkgslist','state']:
-            self.send_response(503,"format error")
+            print("format error")
         else:                      
             if res['state'] == 3 or res['state'] == 6: #编译完状态
-                self.send_response(201) 
+                
 
                 #先查本地仓库拿到version
                 softversion = IsNewSoft(res['name'])
@@ -77,8 +81,8 @@ class myHandler(BaseHTTPRequestHandler):
                             dockerlogger.error("%s" %traceback.format_exc())              
                 
             else:
-                 self.send_response(503,"state error")  
-        self.end_headers()
+                print("state error")  
+        
         
 
 
@@ -87,7 +91,7 @@ class myHandler(BaseHTTPRequestHandler):
         self.send_response(201,"ok")
         self.send_header('Content-type','application/json')
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
-        self.send_header('Access-Control-Allow-Origin', "http://"+IPDocker+":"+str(portDocker))
+        self.send_header('Access-Control-Allow-Origin', "http://localhost:8998")
         #self.send_header('*', "http://"+IPDocker+":"+str(portDocker))
         self.end_headers()
             

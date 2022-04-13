@@ -24,7 +24,7 @@ TODO
 '''
 
 
-#设置文件夹路径为全局变量
+# 设置文件夹路径为全局变量
 
 weblogger = myLogger('web').getmyLogger()
 
@@ -32,8 +32,11 @@ weblogger = myLogger('web').getmyLogger()
 class myHandler(BaseHTTPRequestHandler):
 
   
+
     def do_GET(self):
-        pass
+        self.send_response(200)
+        self.send_header('Content-type','text/html')
+        self.end_headers()
 
 
     def do_POST(self):
@@ -42,21 +45,25 @@ class myHandler(BaseHTTPRequestHandler):
         #print(self.command)
 
         req_datas = self.rfile.read(int(self.headers['content-length']))
+        self.send_response(201)
         self.send_header('Content-type','text/html')
-        #self.send_header("Access-Control-Allow-Origin", "http://"+IPWeb+":"+str(portWeb))
-        self.send_header("*", "http://"+IPWeb+":"+str(portWeb))
+        self.send_header("Access-Control-Allow-Origin",  "http://localhost:8080")
+        #self.send_header("*", "http://"+IPWeb+":"+str(portWeb))
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
        
-
+        
+        self.end_headers()
         res1 = req_datas.decode('utf-8') #解码
         res = json.loads(res1) #变成字典
+        print(res)
         
         if list(res.keys()) != ['name','address','state']:
-            self.send_response(503,"format error")
+            #self.send_response(503)
+            print('format error')
         else:
             
             if res['state'] == 'wait': #需要下载的软件
-                self.send_response(201)
+                #self.send_response(201)
                 state = 2
                 try: #下载错误
                     new_path = self.Add_software(res['name'],res['address'])
@@ -81,7 +88,7 @@ class myHandler(BaseHTTPRequestHandler):
                 
 
             elif res['state'] == 'delete': #需要删除的软件
-                self.send_response(201)
+                #self.send_response(201)
 
                 #删除本地目录
                 try:
@@ -112,8 +119,9 @@ class myHandler(BaseHTTPRequestHandler):
                
                 
             else:
-                 self.send_response(503,"state error")  
-        self.end_headers()
+                print('state error')
+        
+        
 
 
 
@@ -121,8 +129,7 @@ class myHandler(BaseHTTPRequestHandler):
         self.send_response(201,"ok")
         self.send_header('Content-type','application/json')
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
-        #self.send_header('Access-Control-Allow-Origin', "http://"+IPWeb+":"+str(portWeb))
-        self.send_header('*', "http://"+IPWeb+":"+str(portWeb))
+        self.send_header('Access-Control-Allow-Origin',   "http://localhost:8080")
         self.end_headers()
 
 
@@ -142,10 +149,8 @@ class myHandler(BaseHTTPRequestHandler):
 
         #y用于删除本地的软件对应的仓库和软件库
         #删除参数为对应的包的名字
-    def Delete_compiled_Packge(self,name):
-        
+    def Delete_compiled_Packge(self,name):       
         #从本地数据库中查找出所有的需要的删除的包名
-
         try:
             pkgslist = queryLocalDatabase(name)
         except Exception:
@@ -156,17 +161,6 @@ class myHandler(BaseHTTPRequestHandler):
             pass
         
 
- 
-
-
-
-
-
-       
-    
-    
-
-
 
 def listener():
         
@@ -176,11 +170,6 @@ def listener():
     print("starting listening...... at %s:%s"%host)
     server.serve_forever()
     
-
-
-
-
-
 
 
 
