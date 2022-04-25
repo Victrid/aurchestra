@@ -2,7 +2,7 @@ extends layout
 
 block content
     div#packagelist
-        button.outline.u-shadow-xl.add-btn(@click="open") Add
+        button.outline.u-shadow-xl.add-btn(@click="open") Apply
         table.table.striped(align="center")
             thead
                 tr
@@ -16,7 +16,8 @@ block content
                 each item in data
                     tr
                         td.name #{item.name}
-                        td.link #{item.addr}
+                        td.link 
+                            a(href=item.addr)  #{item.addr}               
                         td.state #{item.state}
         div.card.animated.bounceIn(v-if="is_open" @close="close()")
             div.card__header
@@ -43,4 +44,4 @@ block content
                 div.card__action-bar.u-center
                     button.btn-transparent.outline.mx-4(@click="cancel") Cancel
                     button.btn-transparent.outline.mx-4(@click="submit") Submit
-                p.text-ls(v-if="show_result",) {{result}}
+                p.text-ls.results(v-if="show_result" align='center') {{result}}

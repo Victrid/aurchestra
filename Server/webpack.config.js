@@ -1,7 +1,6 @@
 const path = require('path');
 const webpack = require('webpack')
 const { VueLoaderPlugin } = require('vue-loader')
-
 function root(__path) {
   return path.join(__dirname, __path);
 }
@@ -78,6 +77,5 @@ module.exports = {
       /Sequelize(\\|\/)/, 
       path.resolve(__dirname, '../src') ),
   ],
-
   externals: ['express']
 };

@@ -1,6 +1,6 @@
 var config = {
     ip: "http://localhost",
-    port: 4000,
+    port: 8888,
     addInfo: "wait",
     deleteInfo: "delete"
 };

@@ -18,7 +18,7 @@
                 <a class="nav-dropdown-link">Supported OS</a>
                 <ul class="dropdown-menu dropdown-animated" role="menu">
                     <li role="menu-item"><a href="arch">Arch Linux</a></li>
-                    <li role="menu-item"><a href="TBD">Coming soon...</a></li>
+                    <li role="menu-item" ><a>Coming soon...</a></li>
                 </ul>
             </div>
         </div>
@@ -50,7 +50,6 @@ export default {
 </script>
 
 <style>
-.content{
-}
+
 </style>
 

@@ -74,10 +74,11 @@ export default {
       title2_4: "Modify",
       admin: "",
       password: "",
-      loggedIn: true, //set true to debug [TODO: set false after debug]
+      loggedIn: false, //set true to debug [TODO: set false after debug]
       toBeCheckedList: [],
       existedList: [],
       baseURL: "",
+      debug: true,
     };
   },
   computed: {
@@ -172,9 +173,9 @@ export default {
         this.update_list(),
       ).then(
         //HTTP通知守护进程
-        this.watcher(item,2)
+        (!this.debug)&& (this.watcher(item,2))
       )
-      // this.watcher(item,2)
+      // 
     },
     reject_item(item) {
       console.log("申请拒绝...", item.name);

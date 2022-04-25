@@ -4,21 +4,22 @@ export default {
   name: "PackageApp",
   data() {
     return {
-      title1: "Package Name",
-      title2: "Addr Link",
+      title1: "Name",
+      title2: "Address",
       title3: "State",
-      packName:"package1",
-      packAddr:"http://test.com",
+      packName:"Please input the package Name......",
+      packAddr:"Please input the git address......",
       conEmail:"",
       is_open:false,
-      show_result:false,
       result:"",
     };
   },
   mounted() {
 
   },
-  computed: {},
+  computed: {
+    
+  },
   components: {
   },
   methods: {
@@ -32,7 +33,6 @@ export default {
       console.log("取消申请!")
       this.is_open=false
     },
-
     submit(){
       console.log(`提交申请:
       Name: ${this.packName}\n 
@@ -40,7 +40,6 @@ export default {
       Email: ${this.conEmail}
       `)
       let baseURL = window.location.hostname+':'+window.location.port+window.location.pathname;
-
       let tmp = this.conEmail
       if (tmp === ""){
         tmp = null
@@ -55,64 +54,58 @@ export default {
       // console.log(api);
       this.axios.post(api, item).catch((error) => {
         console.warn(error);}).then(
-          (v) => this.result = (v.status==201)?'Apply Success!':'Apply Fail! Please input right info')
-          .then(
-        this.show_result=true).then(
+          (v) => this.result = (v.status==201)?'Apply Success!':'')
+          .then(this.show_result=true).then(
           setTimeout(()=>{
             if (this.result=='Apply Success!'){
               window.location.href = 'http://'+baseURL
-            }            
+            }else{
+              alert('The package has been already in the system.')
+            }
           },1000)
         )
-    }
+      }
 
   },
 };
 </script>
 
 <style>
-.table abbr {
+/* Titile attributes */
+.table abbr {  
   font-size: 20pt;
-  color: rgb(253, 254, 255);
+  color: rgba(199, 199, 199, 0.905);
   align-self: flex-start;
 }
-.table td {
-  align-self: center;
-  align-content: center;
-}
+
 .table td.name {
-  font-size: 22pt;
-  color: rgb(26, 59, 250);
-  font-style: italic;
+  font-size: 1.5em;
+  color: rgba(255, 254, 254, 0.928);
   font-weight: bolder;
 }
-.table td.link {
-  font-size: 16pt;
-  color: rgb(209, 215, 252);
-  font-weight: bold;
+
+.table td.link a{
+  font-size: 1.3em;
+  color: rgb(0, 229, 255);
+  font-style: italic;
 }
 .table td.state {
-  font-size: 16pt;
-  color: rgb(228, 230, 241);
-  font-style: italic;
-  font-weight: bolder;
-}
-.table td.success {
-  font-size: 15pt;
-  color: rgb(63, 236, 48);
-  font-weight: bolder;
+  font-size: 1.3em;
+  color: rgb(37, 255, 109);
+
 }
 
 .table {
   width: 80%;
 }
 .add-btn{
-  position: absolute;
-  right: 4%;
-  font-size: 25px;
-  color: rgb(228, 243, 90);
+  position:fixed;
+  left:90%;
+  width: 8%;
+  font-size:1em;
+  color: rgb(66, 195, 255);
   font-weight: bolder;
-  background: rgba(23, 82, 146, 0.507);
+  background: rgba(45, 60, 7, 0.275);
 }
 .card{
   max-width: 60%;
@@ -134,4 +127,5 @@ export default {
 .card.input{
   font-size:20px
 }
+
 </style>

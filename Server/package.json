@@ -13,17 +13,14 @@
     "axios": "^0.26.1",
     "bcrypt": "^5.0.1",
     "buffer": "^6.0.3",
-    "cirrus-ui": "^0.7.0",
     "cookie-parser": "~1.4.4",
     "cor": "^0.0.0",
     "cors": "^2.8.5",
-    "debug": "~4.3.4",
     "express": "4.17.3",
     "http-errors": "~2.0.0",
     "morgan": "~1.10.0",
     "mysql2": "^2.3.3",
     "node-gyp": "^9.0.0",
-    "pg-hstore": "^2.3.4",
     "pug": "3.0.2",
     "pug-plain-loader": "^1.1.0",
     "sequelize": "^6.17.0",
@@ -43,5 +40,10 @@
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.4",
     "webpack-node-externals": "^3.0.0"
-  }
+  },
+  "description": "主要对node.js实现的服务器开发过程进行临时性记录和说明   **更详细和具体的文档请见wiki界面**(待整理)",
+  "main": "app.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
