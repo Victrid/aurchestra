@@ -1,18 +1,25 @@
 import traceback
-from ConnectMQ import modifyDatabase, updateLocalDatabase, IsNewSoft, insertLocalDatabase
+from ConnectMQ import modifyDatabase, updateVersionLocalDatabase, CheckSoftwareVersion, deleteLocalDatabase, file_remove_readonly, Logger
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from env import IPDocker, portDocker,pkgs_path
 from loggerWrite import myLogger
 import os
 import shutil
+import git
+
 '''
 功能：
     1、监听消息队列，获取编译好的软件更新信息
     2、修改数据库中的状态信息。
 
 '''
-dockerlogger = myLogger('docker').getmyLogger()
+#dockerlogger = myLogger('docker1').getmyLogger()
+
+# 用于处理只读文件无法删除的问题
+
+
+
 
 class myHandler(BaseHTTPRequestHandler):
 
@@ -25,60 +32,88 @@ class myHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
 
-        #print(self.headers)
-        #print(self.command)
+
 
         req_datas = self.rfile.read(int(self.headers['content-length']))
         self.send_header('Content-type','text/html')
         self.send_header("Access-Control-Allow-Origin", "http://localhost:8998")
-        #self.send_header("*", "http://"+IPDocker+":"+str(portDocker))
+
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 
-        self.send_response(201) 
-        #print("----------接收数据---------")
-        #这里接收的数据 name state
+        self.send_response(201)
         self.end_headers()
 
 
         res1 = req_datas.decode('utf-8') #解码
         res = json.loads(res1) #变成字典
 
-        if list(res.keys()) != ['name','pkgslist','state']:
+        if list(res.keys()) != ['name','state','info']:
             print("format error")
         else:                      
-            if res['state'] == 3 or res['state'] == 6: #编译完状态
+            if res['state'] == 3 or res['state'] == 6: # 编译完状态
+                
+                #写入日志
+                loginfo = {3:" compiling success", 6:" compiling fail"}
+                logkey = res['name']+loginfo[res['state']]
+                Logger(logkey, res['info'])
                 
 
-                #先查本地仓库拿到version
-                softversion = IsNewSoft(res['name'])
+                # 先查本地仓库拿到version
+                softversion = CheckSoftwareVersion(res['name'])
 
-                if softversion==0: #软件首次加入
-                    #失败，则删除本地文件，本地数据库中没有对于的条目
+                if softversion==0: # 软件首次加入
+                    # 失败，则删除本地文件，同时删除对应的条目
                     if res['state'] == 6: 
                         localpath = os.path.join(pkgs_path,res['name'])
-                        shutil.rmtree(localpath)
+                        shutil.rmtree(localpath,onerror=file_remove_readonly)
+                        try:
+                            deleteLocalDatabase(res['name'])
+                        except Exception:
+                            #dockerlogger.error("%s" %traceback.format_exc())
+                            Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
 
-                    #成功，则需要在本地数据库中加入该条目
+                    # 成功，则需要更新本地数据库中的版本为1
                     if res['state'] == 3: 
                         try:
-                            insertLocalDatabase(res['name'],res['pkgslist'])
+                            updateVersionLocalDatabase(res['name'], True)
                         except Exception:
-                            dockerlogger.error("%s" %traceback.format_exc())
+                            #dockerlogger.error("%s" %traceback.format_exc())
+                            Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
 
                     try:
                         modifyDatabase(res['name'],res['state'])
                     except Exception:
-                        dockerlogger.error("%s" %traceback.format_exc())
+                        Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
+
 
                 else: #是对旧版本的更新
 
-                    #失败则什么都不做
-                    #成功则需要更新数据库
+                    # 失败则用旧版本覆盖新版本的数据库，并将本地的仓库回退，以便下次能检查更新
+                    if res['state'] == 6:
+                        try:
+                            updateVersionLocalDatabase(res['name'],False) #失败
+                        except Exception:
+                            Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
+
+                        #回退本地仓库到上一个版本
+                        localpath = os.path.join(pkgs_path, res['name'])
+                        newrepo = git.Repo(path=localpath)  # 这样就可以和当前这个分支建立联系
+                        gitt = newrepo.git
+                        gitt.reset('--hard', 'HEAD@{1}')
+
+
                     if res['state'] == 3:
                         try:
-                            updateLocalDatabase(res['name'],res['pkgslist'], softversion+1)
+                            updateVersionLocalDatabase(res['name'], True)
                         except Exception:
-                            dockerlogger.error("%s" %traceback.format_exc())              
+                            Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
+
+                        #考虑到更新时间，所以对旧版本更新成功也需要写一下更新时间
+                        try:
+                            modifyDatabase(res['name'],res['state'])
+                        except Exception:
+                            Logger("Connect to Docker(connect to Web Database)", str(traceback.format_exc()))
+
                 
             else:
                 print("state error")  
@@ -111,6 +146,11 @@ def getInfo():
 
 if __name__ == "__main__":
     getInfo()
+    #import stat
+
+
+
+    #shutil.rmtree("softwareHub/python-web3", onerror=file_remove_readonly)
 
 
 

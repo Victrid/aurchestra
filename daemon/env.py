@@ -1,7 +1,11 @@
 import os
 
+pkgs_pathtemp = os.path.abspath(os.path.join(os.path.abspath(__file__),os.pardir,'softwareHub'))
+
+logconfpath = os.path.abspath(os.path.join(os.path.abspath(__file__),os.pardir,'logging','logging.conf'))
+
 #本地软件仓库包
-pkgs_path = os.getenv('PACKAGE_PATH','softwareHub')
+pkgs_path = os.getenv('PACKAGE_PATH',pkgs_pathtemp)
 
 
 #数据库连接需要的参数
@@ -15,14 +19,23 @@ localTableName = os.getenv('LOCAL_TABLE_NAME','softMapPkgs')
 connMyLocalSQLPara = os.getenv('CONNECT_LOCAL_MYSQL_PARAMETER','mysql+pymysql://tp:tpljqj@localhost:3306/software')
  
 
+#连接日志信息数据库
+logtableName = os.getenv('Log_table_name','logInfo')
+connLogPara = os.getenv('CONNECT_LOG_PARAMETER','mysql+pymysql://tp:tpljqj@localhost:3306/software')
+
 #http server需要的参数
 IPWeb = os.getenv('IP_for_web','localhost')
-portWeb = 8888
+portWeb = 8880
 
 IPDocker = os.getenv('TP_for_docker','localhost')
-portDocker = 8889
+portDocker = 8881
+
+
 
 
 #logger配置文件
-logConfigPath = os.getenv('LogConfigPath','logging/logging.conf')
+logConfigPath = os.getenv('LogConfigPath',logconfpath)
+
+
+
 

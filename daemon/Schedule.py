@@ -51,6 +51,6 @@ def schedule(sleeptime):
 
 if __name__ == "__main__":
 
-    sltime = 60
+    sltime = 20
     schedule(sltime)
     

@@ -8,7 +8,7 @@ import json
 
 from env import IPWeb, portWeb,pkgs_path
 
-from ConnectMQ import push_path_to_MQ, deleteFromDatabase, queryLocalDatabase, deleteLocalDatabase,modifyDatabase
+from ConnectMQ import push_path_to_MQ, deleteFromDatabase, queryLocalDatabase, deleteLocalDatabase,modifyDatabase, insertLocalDatabase,file_remove_readonly,Logger
 from loggerWrite import myLogger
 
 '''
@@ -24,9 +24,11 @@ TODO
 '''
 
 
+
+
 # 设置文件夹路径为全局变量
 
-weblogger = myLogger('web').getmyLogger()
+#weblogger = myLogger('web1').getmyLogger()
 
 
 class myHandler(BaseHTTPRequestHandler):
@@ -58,63 +60,79 @@ class myHandler(BaseHTTPRequestHandler):
         print(res)
         
         if list(res.keys()) != ['name','address','state']:
-            #self.send_response(503)
             print('format error')
         else:
             
-            if res['state'] == 'wait': #需要下载的软件
-                #self.send_response(201)
+            if res['state'] == 'wait': # 需要下载的软件
+                # self.send_response(201)
                 state = 2
-                try: #下载错误
+                try: # 下载错误
                     new_path = self.Add_software(res['name'],res['address'])
                 except Exception:
                     state = 6
-                    weblogger.error("%s" %traceback.format_exc())
-                else: #下载成功
+                    #weblogger.error("%s" %traceback.format_exc())4
+                    Logger("Connect to Web(connect to Remote)", str(traceback.format_exc()))
+
+                else: # 下载成功
                     try:
-                        
-                        push_path_to_MQ(new_path) #放入消息队列
+                        newpkglist = push_path_to_MQ(new_path) # 放入消息队列，并获取对应的软件list
                     except Exception:
-                        weblogger.error("%s" %traceback.format_exc())
+                        #weblogger.error("%s" %traceback.format_exc())
+                        Logger("Connect to Web(connect to MQ))", str(traceback.format_exc()))
+
                         state = 6
-                        #对刚才下载成功的目录进行删除
-                        shutil.rmtree(new_path)
+                        # 对刚才下载成功的目录进行删除
+                        shutil.rmtree(new_path,onerror=file_remove_readonly)
+                    else:
+                        try:
+                            insertLocalDatabase(res['name'], newpkglist)
+                        except Exception:
+                            #weblogger.error("%s"%traceback.format_exc())
+                            Logger("Connect to Web(connect to Local Database))", str(traceback.format_exc()))
+
+
                     
-                try: #放入数据库，这里进行人为处理
+                try: # 放入数据库，这里进行人为处理
                     modifyDatabase(res['name'],state)
                 except Exception:
-                    weblogger.error("%s" %traceback.format_exc())
+                    #weblogger.error("%s" %traceback.format_exc())
+                    Logger("Connect to Web(connect to Web Database))", str(traceback.format_exc()))
+
 
                 
 
-            elif res['state'] == 'delete': #需要删除的软件
-                #self.send_response(201)
+            elif res['state'] == 'delete': # 需要删除的软件
 
-                #删除本地目录
+                # 删除本地目录
                 try:
                     localpath = os.path.join(pkgs_path,res['name'])
                     shutil.rmtree(localpath)
                 except Exception:
-                    weblogger.error("%s" %traceback.format_exc())
+                    #weblogger.error("%s" %traceback.format_exc())
+                    Logger("Connect to Web(connect to Web Database))", str(traceback.format_exc()))
+
                 
                 else:
                     #删除远程仓库
                     try:
                         self.Delete_compiled_Packge(res['name'])
                     except Exception:
-                        weblogger.error("%s" %traceback.format_exc())
+                        #weblogger.error("%s" %traceback.format_exc())
+                        Logger("Connect to Web(delete software from hub))", str(traceback.format_exc()))
                     else: 
                         #删除本地数据库
                         try:
                             deleteLocalDatabase(res['name'])
                         except Exception:
-                            weblogger.error("%s" %traceback.format_exc())     
+                            #weblogger.error("%s" %traceback.format_exc())     
+                            Logger("Connect to Web(connect to Local Database))", str(traceback.format_exc()))
 
                         #删除前端数据库条目
                         try:
                             deleteFromDatabase(res['name'])
                         except Exception:
-                            weblogger.error("%s" %traceback.format_exc())
+                            #weblogger.error("%s" %traceback.format_exc())
+                            Logger("Connect to Web(delete local directory))", str(traceback.format_exc()))
 
                
                 
@@ -136,10 +154,9 @@ class myHandler(BaseHTTPRequestHandler):
     def Add_software(self,name,address): #处理增加一个软件的情况，传入参数为包名，一个git地址和对应的存放包的上级文件夹路径
 
         #下载失败
-        try:
-            newrepo = git.Repo.clone_from(url=address,to_path=os.path.join(pkgs_path,name)) #下载
-        except Exception:
-            raise Exception
+
+        newrepo = git.Repo.clone_from(url=address,to_path=os.path.join(pkgs_path,name)) #下载
+
 
         new_path = os.path.join(pkgs_path,name) #这里是存放包的位置加上包名就是包的路径
 
@@ -147,18 +164,16 @@ class myHandler(BaseHTTPRequestHandler):
         return new_path #交给上一级程序将这个文件地址给消息队列程序
 
 
-        #y用于删除本地的软件对应的仓库和软件库
+        # 用于删除本地的软件对应的仓库和软件库
         #删除参数为对应的包的名字
     def Delete_compiled_Packge(self,name):       
         #从本地数据库中查找出所有的需要的删除的包名
-        try:
-            pkgslist = queryLocalDatabase(name)
-        except Exception:
-            raise Exception
-        else:
-            #删除远程仓库
-            #TODO 
-            pass
+
+        pkgslist = queryLocalDatabase(name)
+        #TODO
+        #删除远程仓库
+
+
         
 
 
@@ -169,11 +184,14 @@ def listener():
     server = HTTPServer(host,myHandler)
     print("starting listening...... at %s:%s"%host)
     server.serve_forever()
-    
+
 
 
 
 
 if __name__ == "__main__":
     listener()
-    
+    #import git
+    #import os
+    #newrepo = git.Repo.clone_from(url="https://aur.archlinux.org/python-web3.git",to_path=os.path.join("softwareHub","python-web3")) #下载
+    #print(444)

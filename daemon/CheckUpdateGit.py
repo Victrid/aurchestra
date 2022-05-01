@@ -3,7 +3,7 @@ from sqlite3 import SQLITE_DROP_TEMP_TABLE
 import git 
 import time
 import os
-from ConnectMQ import push_path_to_MQ,modifyDatabase
+from ConnectMQ import push_path_to_MQ,modifyDatabase, updatePkgListLocalDatabase,Logger
 from env import pkgs_path
 from loggerWrite import myLogger
 import traceback
@@ -14,7 +14,7 @@ TODO
 
 '''
 
-gitupdatelogger = myLogger('gitupdate').getmyLogger()
+#//gitupdatelogger = myLogger('gitupdate1').getmyLogger()
 
 class CheckUpdateGit(object):
     def __init__(self,sleep_time):
@@ -29,17 +29,24 @@ class CheckUpdateGit(object):
             try:               
                 path_list = self.check_warehouse_update()
             except Exception:
-                gitupdatelogger.error("%s" %traceback.format_exc())
+                #gitupdatelogger.error("%s" %traceback.format_exc())
+                Logger("Update Software Error(connect to remote house)", str(traceback.format_exc()))
             
             else:                
                 for itempath in path_list:
 
                     #state = 2 #默认成功
                     try:
-                        push_path_to_MQ(itempath)
+                        pkglist = push_path_to_MQ(itempath)
                     except Exception:
-                        gitupdatelogger.error("%s" %traceback.format_exc())
-
+                        #gitupdatelogger.error("%s" %traceback.format_exc())
+                        Logger("Update Software Error(connect to MQ)", str(traceback.format_exc()))
+                    else:
+                        try:
+                            updatePkgListLocalDatabase(os.path.basename(itempath), pkglist)
+                        except Exception:
+                            #gitupdatelogger.error("%s"%traceback.format_exc())
+                            Logger("Update Software Error(connect to Local Database)", str(traceback.format_exc()))
 
                         #state = 6
                     # don't modify the database for updating, I just do it for my self
@@ -63,20 +70,18 @@ class CheckUpdateGit(object):
         for housepath in HousePathes:  #轮询所有的仓库地址，检查更新
 
             #网络错误
-            try:
-                newrepo = git.Repo(path=housepath)  #这样就可以和当前这个分支建立联系
-                gitt = newrepo.git
+            newrepo = git.Repo(path=housepath)  #这样就可以和当前这个分支建立联系
+            gitt = newrepo.git
 
-                str = gitt.pull() #得到pull之后的信息，为一个字符串
+            str = gitt.pull() #得到pull之后的信息，为一个字符串
 
-                lines = str.split('\n') #将字符串按行分割，放入line的list中
+            lines = str.split('\n') #将字符串按行分割，放入line的list中
 
-                if len(lines)==1: #无更新
-                    continue
-                else: #有更新，即这个软件包更新。直接记录下这个路径
-                    paths.append(housepath) #只考虑一个包对应一个本地仓库的情况
-            except Exception:
-                raise Exception
+            if len(lines)==1: #无更新
+                continue
+            else: #有更新，即这个软件包更新。直接记录下这个路径
+                paths.append(housepath) #只考虑一个包对应一个本地仓库的情况
+
                 
         paths = list(set(paths)) #去重，因为一个文件夹下多个文件更新的情况
 

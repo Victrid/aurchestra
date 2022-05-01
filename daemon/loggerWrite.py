@@ -19,9 +19,9 @@ if __name__ == '__main__':
 
     import time
     while True:
-        weblogger = myLogger('web').getmyLogger()
-        gitloger = myLogger('gitupdate').getmyLogger()
-        dokerlogger = myLogger('docker').getmyLogger()
+        weblogger = myLogger('web1').getmyLogger()
+        gitloger = myLogger('gitupdate1').getmyLogger()
+        dokerlogger = myLogger('docker1').getmyLogger()
         weblogger.error('fffff')
         gitloger.error('fffff')
         dokerlogger.error('fffff')
