@@ -7,11 +7,23 @@ from urllib.parse import urljoin
 import requests
 
 from .MQBase import MQBase
-from .env import default_timeout, repo_server
+from .env import default_timeout, repo_server, daemon_server
 from .makepkg_common import MakepkgRuntimeError, MakepkgTimeoutError, get_pkglist
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+# message format: {'name':'git', 'state':'3', 'info': '...'}
+def send_report(name: str, state: int, info: str):
+    url = urljoin(daemon_server, '')
+    data = {
+        'name':   name,
+        'state':  state,    # 3 for success, 6 for fail
+        'info':  info,
+        }
+    requests.post(url, data=data)
+
 
 class MQReceiver(MQBase):
     def __init__(self, connection: str):
@@ -35,7 +47,15 @@ class MQReceiver(MQBase):
             ch.basic_ack(delivery_tag=method.delivery_tag)
             # Extract and compile
             logger.debug("Removed from queue: {}".format(filename))
-            self.compilation(tmpdir)
+            try:
+                pkglist = self.compilation(tmpdir)
+                send_report(filename, 3, pkglist)
+            except MakepkgRuntimeError as e:
+                send_report(filename, 6,
+                                  "Return code {}:\nstdout:\n{}\nstderr:\n{}\n".format(e.return_code, e.stdout,
+                                                                                       e.stderr
+                                                                                       )
+                                  )
 
     def compilation(self, working_dir):
         logger.debug("Starting extraction")
@@ -45,7 +65,7 @@ class MQReceiver(MQBase):
             )
         logger.debug("Extraction done")
         self.compile_package(working_dir)
-        self.upload_package(working_dir)
+        return self.upload_package(working_dir)
 
     def compile_package(self, working_dir) -> None:
         """
@@ -60,7 +80,7 @@ class MQReceiver(MQBase):
                                )
         except TimeoutError:
             logger.error("Compilation timeout")
-            raise MakepkgTimeoutError()
+            raise MakepkgTimeoutError("Time out error occurs.\n", "")
         if makepkg_proc.returncode != 0:
             logger.error("Compilation failed")
             raise MakepkgRuntimeError(makepkg_proc.returncode, makepkg_proc.stdout, makepkg_proc.stderr)
@@ -77,7 +97,7 @@ class MQReceiver(MQBase):
             if response.status_code != 200:
                 logger.error("Upload failed")
                 raise MakepkgRuntimeError(response.status_code, response.text, "")
-        return
+        return pkg_list
 
     def run(self):
         self.channel.basic_consume(queue='work_dispatch', on_message_callback=self.message_callback)

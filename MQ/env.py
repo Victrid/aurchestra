@@ -6,3 +6,5 @@ ftp_user = os.getenv('FTP_USER', "admin")
 ftp_pass = os.getenv('FTP_PASS', "test")
 repo_server = os.getenv('REPO_SERVER', "http://127.0.0.1:8080")
 default_timeout = os.getenv('DEFAULT_TIMEOUT', 3600)
+
+daemon_server = os.getenv('DAEMON_SERVER', "http://127.0.0.1:8081")

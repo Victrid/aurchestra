@@ -6,6 +6,11 @@ class MakepkgError(Exception):
 
 
 class MakepkgTimeoutError(MakepkgError):
+    def __init__(self, stdout: str, stderr: str):
+        self.return_code = 124
+        self.stdout = stdout
+        self.stderr = stderr
+
     pass
 
 
