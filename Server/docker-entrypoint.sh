@@ -1,2 +1,2 @@
 #!/bin/sh
-pm2 start bin/www
+node bin/www

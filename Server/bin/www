@@ -28,7 +28,7 @@ async function dbinit() {
     console.log(error.message);
     process.exit(1);
   }
-  console.log(`Starting Sequelize on port ${port}...`);
+  console.log(`Starting Sequelize...`);
 
   await sequelize.sync()
     .then(() => {
@@ -37,10 +37,10 @@ async function dbinit() {
   if ((await sequelize.models.admin.count()).valueOf()==0){
     //create a admin user
     var salt = await bcrypt.genSalt(8);
-    var psd = await bcrypt.hash('admin', salt);
+    var psd = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'examplepassword', salt);
     console.log(psd)
     await sequelize.models.admin.create(
-      { username: 'admin',
+      { username: process.env.ADMIN_ACCOUNT || 'admin',
         password: psd}
     )
     console.log("initial admin...")

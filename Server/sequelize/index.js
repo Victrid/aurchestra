@@ -2,7 +2,8 @@ const { Sequelize } = require('sequelize');
 const { applyExtraSetup } = require('./extra-setup');
 const config = require('../config/db.config');
 
-const sequelize = new Sequelize(
+
+const sequelize = process.env.DB_CONNECTION ? new Sequelize(process.env.DB_CONNECTION) : new Sequelize(
     config.dbname,
     config.uname,
     config.upwd,
@@ -12,6 +13,7 @@ const sequelize = new Sequelize(
         pool: config.pool
     }
 );
+
 
 const modelDefiners = [
 	require('./models/admin.model'),

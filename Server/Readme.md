@@ -41,7 +41,7 @@ POST(ip:port,data)
     - [x] 展示内容处理: 
         - [x] 展示1(等待编译)，2(编译中)，3(编译完成)三种情况
         - [x] 按字母序进行排列
-        - [ ] ~~每种情况适配不同的CSS 1-橙色 2-黄色 3-绿色~~:这套开发组件做这件事情比较困难
+        - [x] 每种情况适配不同的CSS 1-橙色 2-黄色 3-绿色:这套开发组件做这件事情比较困难
     - [x] 申请已有包的处理
     - [x] 处理空格
     - [x] CSS优化
@@ -61,16 +61,18 @@ POST(ip:port,data)
             - [ ] ~~更新已有条目:更新已有条目=>更新状态~~:暂时不考虑更新
     - [x] CSS优化
 - [x] 实现本地部署:基于`PM2`和`nginx`代理实现动态网页部署
-- [ ] 非核心内容补充
+- [x] 非核心内容补充
     - [x] Home Page 
-    - [ ] About Page
+    - [x] About Page
     - [x] Help Page
-- [ ] 实现容器化部署Dockerfile:docker内部没问题(PM2正常运行)，host端口映射存在问题，访问不到exposed port.
-
+- [x] 实现容器化部署Dockerfile
+- [x] 保持admin登录状态
+- [x] 合并page
+    - [x] Home + About
+    - [x] Arch + Help
 
 ### Future work
 - [ ] 编译错误处理
-- [ ] 保持admin登录状态
 - [ ] 审核结果发送邮件
 - [ ] Package page搜索功能:暂时不提供搜索功能，可使用浏览器自带的方法进行搜索
 

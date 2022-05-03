@@ -2,8 +2,8 @@ version: '2'
 services:
   repo:
     build:
-        dockerfile: ./Dockerfile/Repository.dockerfile
         context: ../
+        dockerfile: ./Dockerfile/Repository.dockerfile
     restart: always
     ports:
       - "8080:80"
@@ -11,24 +11,72 @@ services:
       db:
         condition: service_healthy
     volumes:
-      -  repo:/var/www/aurchestra
+#      -  repostorage:/var/www/aurchestra
       -  /home/victrid/test.gpg:/etc/aurchestra/private.key
     environment:
       AURCHESTRA_DB_CONNECTION: "postgresql+psycopg2://exampleuser:examplepassword@db/repo"
       AURCHESTRA_MV_PATH: "/bin/mv"
-      
+
+  vsftpd:
+    image: million12/vsftpd
+    restart: always
+#    volumes:
+#      - ftpstorage:/var/ftp/pub
+    environment:
+      ANONYMOUS_ACCESS: true
+      LOG_STDOUT: true
+      FTP_USER: admin
+      FTP_PASS: test
+      FTP_PORT: 2222
+      PASV_ADDRESS: 127.0.0.1
+      PASV_MIN_PORT: 21100
+      PASV_MAX_PORT: 21110
+#    ports:
+#      - "20:20"
+#      - "21:21"
+#      - "21100-21110:21100-21110"
+
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: test
+      RABBITMQ_DEFAULT_VHOST: /
+#    ports:
+#      - "5672:5672"
+#      - "15672:15672"
+
   db:
     image: postgres:14.2-bullseye
     restart: always
     environment:
       POSTGRES_USER: exampleuser
       POSTGRES_PASSWORD: examplepassword
-      POSTGRES_DB: repo
+      POSTGRES_MULTIPLE_DATABASES: repo,web
+    volumes:
+      - ./postgres-config:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U exampleuser -d repo"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-volumes:
-  repo:
+  web:
+    build:
+      context: ../
+      dockerfile: ./Dockerfile/Server.dockerfile
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_CONNECTION: "postgresql://exampleuser:examplepassword@db/web"
+      ADMIN_ACCOUNT: "admin"
+      ADMIN_PASSWORD: "test"
+    ports:
+      - "8081:80"
+
+#volumes:
+#  repostorage:
+#  ftpstorage:

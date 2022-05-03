@@ -1,47 +1,5 @@
 extends layout
 
 block content
-    div#packagelist
-        button.outline.u-shadow-xl.add-btn(@click="open") Apply
-        table.table.striped(align="center")
-            thead
-                tr
-                    th 
-                        abbr(title="Title1") {{ title1 }}
-                    th 
-                        abbr(title="Title2") {{ title2 }}
-                    th 
-                        abbr(title="Title3") {{ title3 }}
-            tbody     
-                each item in data
-                    tr
-                        td.name #{item.name}
-                        td.link 
-                            a(href=item.addr)  #{item.addr}               
-                        td.state #{item.state}
-        div.card.animated.bounceIn(v-if="is_open" @close="close()")
-            div.card__header
-                p.title Apply to add a new package to Aurchestra :
-            div.content
-                .row.level
-                .col-xs-3.level-item
-                    p.m-0.text-info.font-bold.text-lg Package Name*:
-                .col-xs-9.level-item
-                    input(type="name", v-model="packName")
-                // Addr
-                .row.level
-                .col-xs-3.level-item
-                    p.m-0.text-info.font-bold.text-lg Package Address*:
-                .col-xs-9.level-item
-                    input(type="url", v-model="packAddr")
-                // Email
-                .row.level
-                .col-xs-3.level-item
-                    p.m-0.text-info.font-bold.text-lg Connect Email:
-                .col-xs-9.level-item
-                    input(type="email", v-model="conEmail")
-                p.text-md (We will use this email to keep you updated on the status of your application submission)
-                div.card__action-bar.u-center
-                    button.btn-transparent.outline.mx-4(@click="cancel") Cancel
-                    button.btn-transparent.outline.mx-4(@click="submit") Submit
-                p.text-ls.results(v-if="show_result" align='center') {{result}}
+    #packagelist
+        

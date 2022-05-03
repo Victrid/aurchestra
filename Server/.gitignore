@@ -2,7 +2,7 @@
 node_modules
 /dist
 .testGuardian/*
-
+sessions
 
 # local env files
 .env.local

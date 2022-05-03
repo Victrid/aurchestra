@@ -1,7 +1,7 @@
 <template lang='pug'>
-.div(v-if="loggedIn")
-  h2(style="color: white") Welecom: {{ admin }}
-  h3(style="color: white") Packages to be reviewed:
+.login-content(v-if="loggedIn")
+  h4(style="color: white") Welecom: {{ admin }}
+  h5(style="color: rgb(244, 255, 37)") Packages to be reviewed:
   table.table.striped(align="center")
     thead
       tr
@@ -20,9 +20,25 @@
         td {{ item.email }}
         td 
           button.mr-2(@click="pass_item(item)") pass
-          button.ml2(@click="reject_item(item)") reject
-
-  h3(style="color: white") Manage existing packages:
+          button.ml2(@click="reject_item(item)" style="color:red") reject
+  h5(style="color: rgb(255, 102, 37)") Packages with compilation errors:
+    table.table.striped(align="center")
+      thead
+        tr
+          th 
+            abbr(title="Title1") {{ title1 }}
+          th 
+            abbr(title="Title2") {{ title2 }}
+          th 
+            abbr(title="Title3") {{ title2_3 }}
+      tbody 
+        tr(v-for="item in wrongList")
+          td {{ item.name }}
+          td {{ item.addr }}
+          td 
+            button.mr-2(@click="check_item(item)") Check
+            button.ml2(@click="delete_item(item)" style="color:red") delete
+  h5(style="color: rgb(70, 255, 37)") Manage existing packages:
   table.table.striped(align="center" )
     thead
       tr
@@ -31,9 +47,9 @@
         th 
           abbr(title="Title2") {{ title2 }}
         th 
-          abbr(title="Title3") {{ title2_3 }}
+          abbr(title="Title3") {{ title3_3 }}
         th
-          abbr(title="Title3") {{ title2_4 }}
+          abbr(title="Title3") {{ title3_4 }}
 
     tbody 
       tr(v-for="item in existedList")
@@ -42,7 +58,10 @@
         td {{ item.state }}
         td 
           //- button.mr-2(@click="update_item(item)") update
-          button.ml2(@click="delete_item(item)" :disabled="item.state==2") delete
+          button.ml2(@click="delete_item(item)" style="color:red" :disabled="item.state==2") delete
+  .toast(v-show="check_log")
+    button.btn-close(@click="close_log()")
+    p {{current_log}}
 .card.admin-card(style="max-width: 350px", v-else)
   .content.u-text-center.pt-3
     i.fas.fa-user-cog
@@ -58,6 +77,7 @@
       input(type="password", v-model="password")
     br
     button.outline.btn-black(v-on:click="loginFun") login
+
 </template>
 
 <script>
@@ -70,15 +90,20 @@ export default {
       title2: "Address",
       title3: "Contact email",
       title4: "Pass",
-      title2_3: "State",
-      title2_4: "Modify",
+      title2_3: "Logs",
+      title3_3: "State",
+      title3_4: "Modify",
       admin: "",
       password: "",
-      loggedIn: false, //set true to debug [TODO: set false after debug]
+      loggedIn: false, 
+      firstTryinSession: true,
       toBeCheckedList: [],
       existedList: [],
+      wrongList:[],
       baseURL: "",
       debug: true,
+      check_log: false,
+      current_log:"This is a test log",
     };
   },
   computed: {
@@ -99,16 +124,21 @@ export default {
     }
   },
   mounted: function () {
-    console.log("加载页面...");
+    // console.log("加载页面...");
     this.baseURL =
       "http://" +
       window.location.hostname +
       ":" +
       window.location.port +
       window.location.pathname;
-      if(this.loggedIn){
-          this.update_list()
-      }
+    // console.log("session存储测试:",this.$store.state.username)
+    if(this.$store.state.username){
+      //in a session
+      console.log("登录中....")
+      this.loggedIn = true
+      this.update_list()
+      this.admin= this.$store.state.username
+    }
   },
   components: {},
   methods: {
@@ -123,6 +153,7 @@ export default {
           console.log(v.data);
           this.toBeCheckedList = v.data.toBeCheck;
           this.existedList = v.data.Checked;
+          this.wrongList = v.data.wrongList;
         });
     },
     async watcher(item,aimState){
@@ -139,6 +170,7 @@ export default {
           console.warn(error);})
     },
     loginFun() {
+      
       //check input format
       if (this.admin == "") {
         alert("Please input admin account......");
@@ -159,6 +191,9 @@ export default {
           if (!this.loggedIn) {
             alert("The user name or password is incorrect...");
             return;
+          }else{
+            this.$store.commit('cacheUserInfo',this.admin,this.password)
+            console.log("session存储测试:",this.$store.state.username)
           }
         })
         .then(() => {
@@ -168,14 +203,14 @@ export default {
     pass_item(item) {
       console.log("申请通过...", item.name);
       // 将item.name传到后端，尤其向数据库请求更改状态->2
-      this.axios.post(this.passAPI,{packageName:item.name}).catch((error) => 
-      {console.warn(error);}).then(
-        this.update_list(),
-      ).then(
-        //HTTP通知守护进程
-        (!this.debug)&& (this.watcher(item,2))
-      )
-      // 
+      // this.axios.post(this.passAPI,{packageName:item.name}).catch((error) => 
+      // {console.warn(error);}).then(
+      //   this.update_list(),
+      // ).then(
+      //   //HTTP通知守护进程
+      //   this.watcher(item,2)
+      // )
+      this.watcher(item,2)
     },
     reject_item(item) {
       console.log("申请拒绝...", item.name);
@@ -210,15 +245,26 @@ export default {
     update_item(item) {
       console.log("更新条目...", item.name);
       //update name => update name in db and inform 
-      
       //update git addr => delete current item and insert a new one
-
     },
+    check_item(item){
+      console.log("打印log信息...", item.name)
+      this.check_log=true
+      // this.current_log=item.log
+    },
+    close_log(){
+      this.check_log=false
+    }
   },
 };
 </script>
 
-<style>
+<style scoped>
+
+#admin .login-content{
+  margin-left: 10%;
+  margin-right: 10%;
+}
 .admin-card {
   position: absolute;
   left: 40%;
@@ -226,5 +272,23 @@ export default {
 }
 #admin td{
   color: aliceblue;
+}
+#admin .login-content abbr{
+  color:rgb(73, 222, 255);
+  font-size: 1.5em;
+}
+#admin .login-content button{
+  font-weight: bold;
+}
+#admin .toast{
+  position:absolute;
+  top:20%;
+  left: 10%;
+  width:80%;
+  background-color: rgba(239, 149, 3, 0.926);
+}
+#admin .toast p{
+  font-size: 1.5em;
+  font-weight: bold;
 }
 </style>

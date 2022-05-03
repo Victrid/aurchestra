@@ -65,7 +65,16 @@ async function create(req, res) {
 
 /* GET arch listing. */
 router.get('/', function(req, res, next) {
+  res.render('arch', { title: 'arch OS'})
+});
 
+router.post('/api/submit',function(req,res,next){
+  create(req,res).then(v=>
+    console.log(v)
+  );
+});
+
+router.get('/api/getList',function(req,res,next){
   getAvailable(req,res).then(v=>{
     var tmpStr=JSON.stringify(v,null,2);
     const packJson = JSON.parse(tmpStr);
@@ -84,15 +93,8 @@ router.get('/', function(req, res, next) {
       }
     }
     packJson.sort((a,b)=>a['name']-b['name'])
-    res.render('arch', { title: 'arch OS',data:packJson })
+    res.send(packJson)
   });
-  
-});
-
-router.post('/api/submit',function(req,res,next){
-  create(req,res).then(v=>
-    console.log(v)
-  );
 });
 
 module.exports = router;

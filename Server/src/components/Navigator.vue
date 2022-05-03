@@ -24,14 +24,8 @@
         </div>
 
         <div class="nav-right">
-            <div class="nav-item">
-                <a href="about">About</a>
-            </div>
-            <div class="nav-item">
-                <a href="help">Help</a>
-            </div>
             <div class="nav-item active">
-                <a href="admin">Aadministrator</a>
+                <a href="admin">Management</a>
             </div>
         </div>
     </div>

@@ -24,10 +24,13 @@
     "pug": "3.0.2",
     "pug-plain-loader": "^1.1.0",
     "sequelize": "^6.17.0",
+    "session-file-store": "^1.5.0",
     "url": "^0.11.0",
     "util": "^0.12.4",
     "vue": "^3.2.31",
-    "vue-axios": "^3.4.1"
+    "vue-axios": "^3.4.1",
+    "vuex": "^4.0.2",
+    "vuex-persistedstate": "^4.1.0"
   },
   "devDependencies": {
     "css-loader": "^6.7.1",
