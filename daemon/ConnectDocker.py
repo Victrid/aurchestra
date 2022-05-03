@@ -54,8 +54,7 @@ class myHandler(BaseHTTPRequestHandler):
                 
                 #写入日志
                 loginfo = {3:" compiling success", 6:" compiling fail"}
-                logkey = res['name']+loginfo[res['state']]
-                Logger(logkey, res['info'])
+                Logger(res['name'], res['info'])
                 
 
                 # 先查本地仓库拿到version
@@ -70,7 +69,7 @@ class myHandler(BaseHTTPRequestHandler):
                             deleteLocalDatabase(res['name'])
                         except Exception:
                             #dockerlogger.error("%s" %traceback.format_exc())
-                            Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
+                            Logger(res['name'], str(traceback.format_exc()))
 
                     # 成功，则需要更新本地数据库中的版本为1
                     if res['state'] == 3: 
@@ -78,12 +77,12 @@ class myHandler(BaseHTTPRequestHandler):
                             updateVersionLocalDatabase(res['name'], True)
                         except Exception:
                             #dockerlogger.error("%s" %traceback.format_exc())
-                            Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
+                            Logger(res['name'], str(traceback.format_exc()))
 
                     try:
                         modifyDatabase(res['name'],res['state'])
                     except Exception:
-                        Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
+                        Logger(res['name'], str(traceback.format_exc()))
 
 
                 else: #是对旧版本的更新
@@ -93,7 +92,7 @@ class myHandler(BaseHTTPRequestHandler):
                         try:
                             updateVersionLocalDatabase(res['name'],False) #失败
                         except Exception:
-                            Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
+                            Logger(res['name'], str(traceback.format_exc()))
 
                         #回退本地仓库到上一个版本
                         localpath = os.path.join(pkgs_path, res['name'])
@@ -106,13 +105,13 @@ class myHandler(BaseHTTPRequestHandler):
                         try:
                             updateVersionLocalDatabase(res['name'], True)
                         except Exception:
-                            Logger("Connect to Docker(connect to Local Database)", str(traceback.format_exc()))
+                            Logger(res['name'], str(traceback.format_exc()))
 
                         #考虑到更新时间，所以对旧版本更新成功也需要写一下更新时间
                         try:
                             modifyDatabase(res['name'],res['state'])
                         except Exception:
-                            Logger("Connect to Docker(connect to Web Database)", str(traceback.format_exc()))
+                            Logger(res['name'], str(traceback.format_exc()))
 
                 
             else:

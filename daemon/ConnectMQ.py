@@ -19,7 +19,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.abspath(__file__),os.pardir
 
 from MQ import MQSender, makepkg_common
 
-from sqlalchemy import Column,String, create_engine,Integer,VARCHAR, CHAR,Date,TEXT 
+from sqlalchemy import Column,String, create_engine,Integer,VARCHAR, CHAR,Date,TEXT ,ForeignKey
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from env import tableName, connMySQLPara, localTableName, connMyLocalSQLPara, logtableName,connLogPara
@@ -119,7 +119,7 @@ class LogTable(Base):
     __tablename__ = logtableName
 
     id = Column(Integer,autoincrement=True ,primary_key=True)
-    logtype = Column(VARCHAR(255)) #信息关键词
+    name = Column(VARCHAR(255),ForeignKey("softwareInfo.name")) #信息关键词
     loginfo = Column(TEXT) #具体信息字段
 
 
@@ -294,12 +294,12 @@ def updateVersionLocalDatabase(name, state): #state = True 成功，state=false 
 
 
 # 写日志到数据库
-def Logger(logkey, loginfo):
+def Logger(name, loginfo):
     engine = create_engine(connLogPara)
     DBSession = sessionmaker(bind=engine)
     session=DBSession()
 
-    newItem = LogTable(logtype=logkey,loginfo=loginfo)
+    newItem = LogTable(name=name,loginfo=loginfo)
     session.add(newItem)
     session.commit()
     session.close()
@@ -333,9 +333,9 @@ if __name__ == '__main__':
    
 
 
-    """ try:
+    try:
         print(10/0)
     except Exception:
-        Logger("testinfo", str(traceback.format_exc())) """
+        Logger(None, str(traceback.format_exc())) 
 
-    modifyDatabase('python-web3',6)
+    #modifyDatabase('python-web3',6)

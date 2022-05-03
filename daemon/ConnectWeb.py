@@ -71,14 +71,14 @@ class myHandler(BaseHTTPRequestHandler):
                 except Exception:
                     state = 6
                     #weblogger.error("%s" %traceback.format_exc())4
-                    Logger("Connect to Web(connect to Remote)", str(traceback.format_exc()))
+                    Logger(res['name'], str(traceback.format_exc()))
 
                 else: # 下载成功
                     try:
                         newpkglist = push_path_to_MQ(new_path) # 放入消息队列，并获取对应的软件list
                     except Exception:
                         #weblogger.error("%s" %traceback.format_exc())
-                        Logger("Connect to Web(connect to MQ))", str(traceback.format_exc()))
+                        Logger(res['name'], str(traceback.format_exc()))
 
                         state = 6
                         # 对刚才下载成功的目录进行删除
@@ -88,7 +88,7 @@ class myHandler(BaseHTTPRequestHandler):
                             insertLocalDatabase(res['name'], newpkglist)
                         except Exception:
                             #weblogger.error("%s"%traceback.format_exc())
-                            Logger("Connect to Web(connect to Local Database))", str(traceback.format_exc()))
+                            Logger(res['name'], str(traceback.format_exc()))
 
 
                     
@@ -96,7 +96,7 @@ class myHandler(BaseHTTPRequestHandler):
                     modifyDatabase(res['name'],state)
                 except Exception:
                     #weblogger.error("%s" %traceback.format_exc())
-                    Logger("Connect to Web(connect to Web Database))", str(traceback.format_exc()))
+                    Logger(res['name'], str(traceback.format_exc()))
 
 
                 
@@ -109,7 +109,7 @@ class myHandler(BaseHTTPRequestHandler):
                     shutil.rmtree(localpath)
                 except Exception:
                     #weblogger.error("%s" %traceback.format_exc())
-                    Logger("Connect to Web(connect to Web Database))", str(traceback.format_exc()))
+                    Logger(res['name'], str(traceback.format_exc()))
 
                 
                 else:
@@ -118,21 +118,21 @@ class myHandler(BaseHTTPRequestHandler):
                         self.Delete_compiled_Packge(res['name'])
                     except Exception:
                         #weblogger.error("%s" %traceback.format_exc())
-                        Logger("Connect to Web(delete software from hub))", str(traceback.format_exc()))
+                        Logger(res['name'], str(traceback.format_exc()))
                     else: 
                         #删除本地数据库
                         try:
                             deleteLocalDatabase(res['name'])
                         except Exception:
                             #weblogger.error("%s" %traceback.format_exc())     
-                            Logger("Connect to Web(connect to Local Database))", str(traceback.format_exc()))
+                            Logger(res['name'], str(traceback.format_exc()))
 
                         #删除前端数据库条目
                         try:
                             deleteFromDatabase(res['name'])
                         except Exception:
                             #weblogger.error("%s" %traceback.format_exc())
-                            Logger("Connect to Web(delete local directory))", str(traceback.format_exc()))
+                            Logger(res['name'], str(traceback.format_exc()))
 
                
                 

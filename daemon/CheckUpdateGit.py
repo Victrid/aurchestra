@@ -30,7 +30,7 @@ class CheckUpdateGit(object):
                 path_list = self.check_warehouse_update()
             except Exception:
                 #gitupdatelogger.error("%s" %traceback.format_exc())
-                Logger("Update Software Error(connect to remote house)", str(traceback.format_exc()))
+                Logger(None, str(traceback.format_exc()))
             
             else:                
                 for itempath in path_list:
@@ -40,13 +40,13 @@ class CheckUpdateGit(object):
                         pkglist = push_path_to_MQ(itempath)
                     except Exception:
                         #gitupdatelogger.error("%s" %traceback.format_exc())
-                        Logger("Update Software Error(connect to MQ)", str(traceback.format_exc()))
+                        Logger(os.path.basename(itempath), str(traceback.format_exc()))
                     else:
                         try:
                             updatePkgListLocalDatabase(os.path.basename(itempath), pkglist)
                         except Exception:
                             #gitupdatelogger.error("%s"%traceback.format_exc())
-                            Logger("Update Software Error(connect to Local Database)", str(traceback.format_exc()))
+                            Logger(os.path.basename(itempath), str(traceback.format_exc()))
 
                         #state = 6
                     # don't modify the database for updating, I just do it for my self
