@@ -16,7 +16,7 @@
     tbody 
       tr(v-for="item in toBeCheckedList")
         td {{ item.name }}
-        td {{ item.addr }}
+        td {{ item.address }}
         td {{ item.email }}
         td 
           button.mr-2(@click="pass_item(item)") pass
@@ -34,7 +34,7 @@
       tbody 
         tr(v-for="item in wrongList")
           td {{ item.name }}
-          td {{ item.addr }}
+          td {{ item.address }}
           td 
             button.mr-2(@click="check_item(item)") Check
             button.ml2(@click="delete_item(item)" style="color:red") delete
@@ -54,7 +54,7 @@
     tbody 
       tr(v-for="item in existedList")
         td {{ item.name }}
-        td {{ item.addr }}
+        td {{ item.address }}
         td {{ item.state }}
         td 
           //- button.mr-2(@click="update_item(item)") update
@@ -81,7 +81,7 @@
 </template>
 
 <script>
-const config = require('../config/guardian.config');
+const instruction = require('../config/daemon.instruction.config')
 export default {
   name: "Admin",
   data() {
@@ -121,6 +121,12 @@ export default {
     },
     deleteAPI:function(){
       return this.baseURL + "/api/delete";
+    },
+    watcherAPI:function(){
+      return this.baseURL + "/api/watcher";
+    },
+    getlogAPI:function(){
+      return this.baseURL + "/api/getlog";
     }
   },
   mounted: function () {
@@ -157,15 +163,12 @@ export default {
         });
     },
     async watcher(item,aimState){
-      console.log("通知守护进程...")
-      let api = config.ip+":"+config.port;
+      let api = this.watcherAPI;
       let data = {
         name : item.name,
-        address: item.addr,
-        state: aimState==2? config.addInfo:config.deleteInfo,
+        address: item.address,
+        state: aimState==2? instruction.addInfo:instruction.deleteInfo,
       }
-      // console.log("api",api)
-      // console.log('data',data)
       this.axios.post(api,data).catch((error) => {
           console.warn(error);})
     },
@@ -203,14 +206,14 @@ export default {
     pass_item(item) {
       console.log("申请通过...", item.name);
       // 将item.name传到后端，尤其向数据库请求更改状态->2
-      // this.axios.post(this.passAPI,{packageName:item.name}).catch((error) => 
-      // {console.warn(error);}).then(
-      //   this.update_list(),
-      // ).then(
-      //   //HTTP通知守护进程
-      //   this.watcher(item,2)
-      // )
-      this.watcher(item,2)
+      this.axios.post(this.passAPI,{packageName:item.name}).catch((error) => 
+      {console.warn(error);}).then(
+        this.update_list(),
+      ).then(
+        //HTTP通知守护进程
+        this.watcher(item,2)
+      )
+      // this.watcher(item,2)
     },
     reject_item(item) {
       console.log("申请拒绝...", item.name);
@@ -245,12 +248,18 @@ export default {
     update_item(item) {
       console.log("更新条目...", item.name);
       //update name => update name in db and inform 
-      //update git addr => delete current item and insert a new one
+      //update git address => delete current item and insert a new one
     },
     check_item(item){
       console.log("打印log信息...", item.name)
-      this.check_log=true
+      
       // this.current_log=item.log
+      this.axios.post(this.getlogAPI,{packageName:item.name}).catch((error) => 
+      {console.warn(error);}).then((v) => {
+          console.log("New response",v.data);
+          this.current_log = v.data;
+        });
+      this.check_log=true
     },
     close_log(){
       this.check_log=false
@@ -270,9 +279,7 @@ export default {
   left: 40%;
   width: 20%;
 }
-#admin td{
-  color: aliceblue;
-}
+
 #admin .login-content abbr{
   color:rgb(73, 222, 255);
   font-size: 1.5em;
@@ -290,5 +297,10 @@ export default {
 #admin .toast p{
   font-size: 1.5em;
   font-weight: bold;
+}
+.login-content td{
+  font-size: 1.2em;
+  font-weight: bold;
+  color: aliceblue;
 }
 </style>

@@ -11,7 +11,7 @@ async function getAvailable(req, res) {
   //1 - wait to compile
   //2 - compiling
   //3 - compiled
-	const packages = await models.package.findAll({
+	const packages = await models.softwareinfo.findAll({
     where:{
       [Op.or]:[
         {state: 1},
@@ -35,16 +35,18 @@ async function create(req, res) {
   
   // console.log(item.name)
   item.name=item.name.trim()
+  item.address=item.address.trim()
+  
   console.log(item.name)
-  const test= await models.package.findAll({
+  const test= await models.softwareinfo.findAll({
       where:{
         name:item.name,
       }
     }
   )
   if(test.length==0){
-    //no such package
-    await models.package.create(item);
+    //no such softwareinfo
+    await models.softwareinfo.create(item);
     res.status(201).send('success')
     return
   }
@@ -53,7 +55,7 @@ async function create(req, res) {
   const json = JSON.parse(str)
   // console.log("==============")
   // console.log(json)
-  if(json.state==1&&json.addr==item.addr){
+  if(json.state==1&&json.address==item.address){
     //wait to check
     res.status(201).send('success')
     return
@@ -90,6 +92,7 @@ router.get('/api/getList',function(req,res,next){
         packJson[i]['state']='Compiling...'
       }else{
         packJson[i]['state']='Available'
+        packJson[i]['lastupdatetime']
       }
     }
     packJson.sort((a,b)=>a['name']-b['name'])

@@ -6,7 +6,7 @@ import shutil
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 
-from env import IPWeb, portWeb,pkgs_path
+from env import IPWeb, portWeb,pkgs_path,softwareHubLock
 
 from ConnectMQ import push_path_to_MQ, deleteFromDatabase, queryLocalDatabase, deleteLocalDatabase,modifyDatabase, insertLocalDatabase,file_remove_readonly,Logger
 from loggerWrite import myLogger
@@ -49,13 +49,14 @@ class myHandler(BaseHTTPRequestHandler):
         req_datas = self.rfile.read(int(self.headers['content-length']))
         self.send_response(201)
         self.send_header('Content-type','text/html')
-        self.send_header("Access-Control-Allow-Origin",  "http://localhost:8080")
+        self.send_header("Access-Control-Allow-Origin",  "*")
         #self.send_header("*", "http://"+IPWeb+":"+str(portWeb))
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
        
         
         self.end_headers()
         res1 = req_datas.decode('utf-8') #解码
+        print("res1: {}".format(res1))
         res = json.loads(res1) #变成字典
         print(res)
         
@@ -67,22 +68,27 @@ class myHandler(BaseHTTPRequestHandler):
                 # self.send_response(201)
                 state = 2
                 try: # 下载错误
-                    new_path = self.Add_software(res['name'],res['address'])
+                    with softwareHubLock:
+                        new_path = self.Add_software(res['name'],res['address'])
+                    print(res['name'], " download successfully")
                 except Exception:
                     state = 6
                     #weblogger.error("%s" %traceback.format_exc())4
                     Logger(res['name'], str(traceback.format_exc()))
+                    print(res['name'], " download failed")
 
                 else: # 下载成功
                     try:
-                        newpkglist = push_path_to_MQ(new_path) # 放入消息队列，并获取对应的软件list
+                        newpkglist = push_path_to_MQ(res['name'], new_path) # 放入消息队列，并获取对应的软件list
+                        print("get the package list of", res['name'], " : ", newpkglist)
                     except Exception:
                         #weblogger.error("%s" %traceback.format_exc())
                         Logger(res['name'], str(traceback.format_exc()))
 
                         state = 6
                         # 对刚才下载成功的目录进行删除
-                        shutil.rmtree(new_path,onerror=file_remove_readonly)
+                        with softwareHubLock:
+                            shutil.rmtree(new_path,onerror=file_remove_readonly)
                     else:
                         try:
                             insertLocalDatabase(res['name'], newpkglist)
@@ -94,6 +100,7 @@ class myHandler(BaseHTTPRequestHandler):
                     
                 try: # 放入数据库，这里进行人为处理
                     modifyDatabase(res['name'],state)
+                    print("modify the state of ", res['name'], " to ", state)
                 except Exception:
                     #weblogger.error("%s" %traceback.format_exc())
                     Logger(res['name'], str(traceback.format_exc()))
@@ -106,7 +113,8 @@ class myHandler(BaseHTTPRequestHandler):
                 # 删除本地目录
                 try:
                     localpath = os.path.join(pkgs_path,res['name'])
-                    shutil.rmtree(localpath)
+                    with softwareHubLock:
+                        shutil.rmtree(localpath)
                 except Exception:
                     #weblogger.error("%s" %traceback.format_exc())
                     Logger(res['name'], str(traceback.format_exc()))
@@ -147,7 +155,7 @@ class myHandler(BaseHTTPRequestHandler):
         self.send_response(201,"ok")
         self.send_header('Content-type','application/json')
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
-        self.send_header('Access-Control-Allow-Origin',   "http://localhost:8080")
+        self.send_header('Access-Control-Allow-Origin',   "*")
         self.end_headers()
 
 
@@ -156,8 +164,6 @@ class myHandler(BaseHTTPRequestHandler):
         #下载失败
 
         newrepo = git.Repo.clone_from(url=address,to_path=os.path.join(pkgs_path,name)) #下载
-
-
         new_path = os.path.join(pkgs_path,name) #这里是存放包的位置加上包名就是包的路径
 
 

@@ -6,7 +6,7 @@ services:
         dockerfile: ./Dockerfile/Repository.dockerfile
     restart: always
     ports:
-      - "8080:80"
+      - "6000:80"
     depends_on:
       db:
         condition: service_healthy
@@ -27,7 +27,7 @@ services:
       LOG_STDOUT: true
       FTP_USER: admin
       FTP_PASS: test
-      FTP_PORT: 2222
+#     FTP_PORT: 20 21 # This image is not setable
       PASV_ADDRESS: 127.0.0.1
       PASV_MIN_PORT: 21100
       PASV_MAX_PORT: 21110
@@ -43,6 +43,11 @@ services:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: test
       RABBITMQ_DEFAULT_VHOST: /
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
 #    ports:
 #      - "5672:5672"
 #      - "15672:15672"
@@ -61,12 +66,24 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      
+  #pgadmin:
+    #image: dpage/pgadmin4
+    #depends_on:
+      #db:
+        #condition: service_healthy
+    #ports:
+      #- "5555:80"
+    #environment:
+      #PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      #PGADMIN_DEFAULT_PASSWORD: admin
+#   restart: unless-stopped
 
   web:
     build:
       context: ../
       dockerfile: ./Dockerfile/Server.dockerfile
-    restart: always
+#   restart: always
     depends_on:
       db:
         condition: service_healthy
@@ -74,9 +91,51 @@ services:
       DB_CONNECTION: "postgresql://exampleuser:examplepassword@db/web"
       ADMIN_ACCOUNT: "admin"
       ADMIN_PASSWORD: "test"
+      DAEMON_CONNECTION: "http://daemon:8880"
+
     ports:
       - "8081:80"
+      
+  daemon:
+    build:
+      context: ../
+      dockerfile: ./Dockerfile/Daemon.dockerfile
+#   restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      CONNECT_MYSQL_PARAMETER: "postgresql+psycopg2://exampleuser:examplepassword@db/web"
+      CONNECT_LOCAL_MYSQL_PARAMETER: "postgresql+psycopg2://exampleuser:examplepassword@db/web"
+      CONNECT_LOG_PARAMETER: "postgresql+psycopg2://exampleuser:examplepassword@db/web"
+      Address_for_MQ: 'amqp://admin:test@rabbitmq/%2F'
+      UPDATA_Interval: '30'
+      FTP_USER: admin
+      FTP_PASS: test
+      FTP_PORT: 21
+      FTP_HOST: vsftpd
 
+  container:
+    build:
+      dockerfile: ./Dockerfile/arch-worker.dockerfile
+      context: ../
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+#   restart: always
+    environment:
+      ADDRESS_FOR_MQ: 'amqp://admin:test@rabbitmq/%2F'
+      FTP_USER: admin
+      FTP_PASS: test
+      FTP_PORT: 21
+      FTP_HOST: vsftpd
+      DAEMON_SERVER: "http://daemon:8881"
+      REPO_SERVER: "http://repo"
+      DEFAULT_TIMEOUT: 3600
 #volumes:
 #  repostorage:
 #  ftpstorage:

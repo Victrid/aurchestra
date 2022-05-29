@@ -4,6 +4,7 @@ from ConnectDocker import getInfo
 from ConnectWeb import listener
 import threading
 import time
+from env import updateInterval
 
    
 
@@ -51,6 +52,5 @@ def schedule(sleeptime):
 
 if __name__ == "__main__":
 
-    sltime = 20
-    schedule(sltime)
+    schedule(int(updateInterval))
     

@@ -5,7 +5,7 @@ ARG REPOSITORY_VERSION
 
 USER root
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.sjtug.sjtu.edu.cn/g' /etc/apk/repositories \
- && apk add --update bash npm \
+ && apk add --update bash npm python3 \
  && npm set registry https://registry.npmmirror.com \
  && npm uninstall uuid && npm install uuid@7.0.3 \
  && npm install webpack webpack-cli -g 

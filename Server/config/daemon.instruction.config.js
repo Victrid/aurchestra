@@ -1,6 +1,5 @@
-var config = {
-    ip: "http://localhost",
-    port: 8888,
+var config = 
+{
     addInfo: "wait",
     deleteInfo: "delete"
 };

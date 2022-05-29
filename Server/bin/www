@@ -8,6 +8,7 @@ var app = require('../app');
 var debug = require('debug')('myapp:server');
 var http = require('http');
 var bcrypt = require('bcrypt')
+
 /**
  * Get port from environment and store in Express.
  */
@@ -47,8 +48,27 @@ async function dbinit() {
   }
 }
 dbinit()
+/**
+ * Get daemon server from environment or not.
+ */
+// const fs=require('fs')
+// var f='../config/daemon.connect.config.js'
+// let api = process.env.DB_CONNECTION? process.env.DB_CONNECTION:"http://localhost:8880"
+// let data =`var config = "`+api+`"\n
+// module.exports = config;`
 
+// fs.writeFile(f,data,(e)=>{
+//   console.log(e)
+// })
+// if(process.env.DB_CONNECTION){
+//   console.log("test success")
+//   // rewrite daemon server address
+//   api= 
 
+// }else{
+//   console.log("test fail")
+
+// }
 
 /**
  * Create HTTP server.

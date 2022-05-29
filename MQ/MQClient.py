@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 import tempfile
 from subprocess import run
 from urllib.parse import urljoin
@@ -7,7 +8,7 @@ from urllib.parse import urljoin
 import requests
 
 from .MQBase import MQBase
-from .env import default_timeout, repo_server, daemon_server
+from .env import default_timeout, repo_server, daemon_server, current_user_is_root
 from .makepkg_common import MakepkgRuntimeError, MakepkgTimeoutError, get_pkglist
 
 logger = logging.getLogger(__name__)
@@ -17,12 +18,13 @@ logger.setLevel(logging.DEBUG)
 # message format: {'name':'git', 'state':'3', 'info': '...'}
 def send_report(name: str, state: int, info: str):
     url = urljoin(daemon_server, '')
+    logger.info("")
     data = {
         'name':   name,
         'state':  state,    # 3 for success, 6 for fail
         'info':  info,
         }
-    requests.post(url, data=data)
+    requests.post(url, json=data)
 
 
 class MQReceiver(MQBase):
@@ -30,7 +32,9 @@ class MQReceiver(MQBase):
         super().__init__(connection)
 
     def message_callback(self, ch, method, properties, body):
-        filename = body.decode('utf-8')
+        content = json.loads(body.decode('utf-8'))
+        filename = content["source"]
+        orig_name = content["name"]
         logger.debug("Received message: {}".format(filename))
         if not self.file_engine.file_engine.exists(filename):
             # TODO: handle file not found
@@ -49,9 +53,9 @@ class MQReceiver(MQBase):
             logger.debug("Removed from queue: {}".format(filename))
             try:
                 pkglist = self.compilation(tmpdir)
-                send_report(filename, 3, pkglist)
+                send_report(orig_name, 3, pkglist)
             except MakepkgRuntimeError as e:
-                send_report(filename, 6,
+                send_report(orig_name, 6,
                                   "Return code {}:\nstdout:\n{}\nstderr:\n{}\n".format(e.return_code, e.stdout,
                                                                                        e.stderr
                                                                                        )
@@ -75,14 +79,16 @@ class MQReceiver(MQBase):
         """
         try:
             logger.debug("Starting compilation")
-            makepkg_proc = run(["/usr/bin/extra-x86_64-build"], cwd=working_dir, capture_output=True, text=True,
-                               timeout=default_timeout
+            os.system("chown -R nobody {}".format(working_dir))
+            makepkg_proc = run(["/usr/bin/makepkg", "-s", "--noconfirm"], cwd=working_dir, capture_output=True, text=True,
+                               timeout=default_timeout, user='nobody' if current_user_is_root else None
                                )
         except TimeoutError:
             logger.error("Compilation timeout")
             raise MakepkgTimeoutError("Time out error occurs.\n", "")
         if makepkg_proc.returncode != 0:
             logger.error("Compilation failed")
+            logger.error("{} {} {}".format(makepkg_proc.returncode, makepkg_proc.stdout, makepkg_proc.stderr))
             raise MakepkgRuntimeError(makepkg_proc.returncode, makepkg_proc.stdout, makepkg_proc.stderr)
         logger.debug("Compilation done")
         return

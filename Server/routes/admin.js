@@ -2,33 +2,20 @@ var express = require('express');
 var router = express.Router();
 const { models } = require('../sequelize');
 var bcrypt = require('bcrypt')
+const axios=require('axios')
+
+const watcherAPI = process.env.DAEMON_CONNECTION ?
+process.env.DAEMON_CONNECTION : require('../config/daemon.connect.config');
+
+
 // const { Op } = require("sequelize");
 
 router.get('/', function(req, res, next) {
     res.render('admin', { title: 'Admin'});
   });
 
-async function check_valid(req,res) {
-  // console.log(req.body)
-  // console.log("check now")
-  
-  // if((req.body&& Object.keys(req.body).length === 0)){
-  //   //not null
-  //   // console.log("null request")
-  //   console.log("SESSION CHECKED:",req.session.userName)
-  //   if(req.session.userName){
-  //     console.log("SESSION:",req.session.userName)
-  //     res.status(201).send('success')
-  //     return true
-  //   }else{
-  //     //nothing happened
-  //     return
-  //   }
-  // }
-  
-  // res.status(200).send('fails')
-  // return false
 
+async function check_valid(req,res) {
 
   // console.log('===============')
   var name = req.body.username
@@ -71,7 +58,7 @@ router.post('/api/login',function(req,res,next){
 
 
 async function get_package(req,res) {
-  const checked = await models.package.findAll({
+  const checked = await models.softwareinfo.findAll({
     where: {
       state: 0
     }
@@ -85,7 +72,7 @@ async function get_package(req,res) {
   var existedJson = [];
   for (const i in states){
     // console.log(states[i])
-    const tmped = await models.package.findAll({
+    const tmped = await models.softwareinfo.findAll({
       where: {
        state: states[i]
       }
@@ -99,7 +86,7 @@ async function get_package(req,res) {
     existedJson.push(...tmpJson)
   }
   //6
-  const wrong = await models.package.findAll({
+  const wrong = await models.softwareinfo.findAll({
     where: {
       state: 6
     }
@@ -125,7 +112,7 @@ router.get('/api/getList',function(req,res,next){
 async function update_state(req,res,aimState){
   // console.log(req.body)
   // console.log(req.body.packageName)
-  await models.package.update({state:aimState},{
+  await models.softwareinfo.update({state:aimState},{
     where: {
      name: req.body.packageName
     }
@@ -135,7 +122,7 @@ async function update_state(req,res,aimState){
 async function reject_item(req,res){
   // console.log(req.body)
   // console.log(req.body.packageName)
-  await models.package.destroy({
+  await models.softwareinfo.destroy({
     where: {
      name: req.body.packageName
     }
@@ -154,8 +141,42 @@ router.post('/api/reject',function(req,res,next){
 });
 
 router.post('/api/delete',function(req,res,next){
-
   update_state(req,res,7).then((v)=>{
+  })
+});
+async function watcher(req,res){
+  console.log("invoke daemon process...")
+  console.log(req.body)
+  axios.post(watcherAPI,req.body).catch((error) => {
+    console.warn(error);})
+}  
+router.post('/api/watcher',function(req,res,next){
+  watcher(req,res).then((v)=>{
+    // console.log(v)
+  })
+});
+
+async function getLog(req,res){
+  var package = req.body.packageName
+  const info = await models.loginfo.findAll({
+    where: {
+      name: package
+    }
+  });
+  if(info.length==0){
+    //no logs
+    res.send("Logs miss temporarily...")
+    return
+  }
+  var str=JSON.stringify(info.at(0),null,2);
+  const json = JSON.parse(str)
+  res.send(json.loginfo)
+}
+
+router.post('/api/getlog',function(req,res,next){
+  console.log("query log: package",req.body)
+  getLog(req,res).then((v)=>{
+    // console.log(v)
   })
 });
 

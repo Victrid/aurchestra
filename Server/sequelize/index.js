@@ -18,6 +18,7 @@ const sequelize = process.env.DB_CONNECTION ? new Sequelize(process.env.DB_CONNE
 const modelDefiners = [
 	require('./models/admin.model'),
 	require('./models/package.model'),
+    require('./models/log.model')
 	// Add more models here...
 	// require('./models/item'),
 ];

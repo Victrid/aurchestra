@@ -16,9 +16,9 @@ table.table.striped
       tr(v-for="item in data")
           td.name {{item.name}}
           td.link 
-              a(v-bind:href="item.addr")  {{item.addr}}               
+              a(v-bind:href="item.address")  {{item.address}}               
           td(v-bind:class="getState(item.state)") {{item.state}}
-          td.time 2 hours ago
+          td.time {{item.lastupdatetime}}
 #help
   h1.headline-6(style="color:white" align='center') Manaual
   .desp
@@ -139,8 +139,8 @@ export default {
     submit(){
       console.log(`提交申请:
       Name: ${this.packName}\n 
-      Addr: ${this.packAddr} \n
-      Email: ${this.conEmail}
+      address: ${this.packAddr} \n
+      Email: ${this.conEmail} 
       `)
       let tmp = this.conEmail
       if (tmp === ""){
@@ -148,9 +148,9 @@ export default {
       }
       let item = {
       "name": this.packName,
-      "addr": this.packAddr,
+      "address": this.packAddr,
       "email": tmp,
-      "state": 0
+      "state": 0,
       }
 
       // console.log(api);
@@ -188,8 +188,9 @@ export default {
 
 .table td.link a{
   font-size: 1.3em;
-  color: #b1b1f1;
+  color: #2525f9;
   font-weight:normal;
+  font-style: italic;
   /* font-style: italic; */
 }
 .table td.waitPac {
@@ -210,18 +211,18 @@ export default {
 .table td.time {
   font-size: 1.3em;
   color: rgb(237, 239, 237);
-  font-weight: thin;
+  font-weight: normal;
 }
 .table {
   width: 50%;
   margin-left: 5%;
 }
 .add-btn{
-  position:fixed;
-  right: 9%;
+  position:absolute;
+  right: 11em;
   top:0%;
   z-index: 1000;
-  width: 6%;
+  width: 8em;
   font-size:1em;
   color: rgb(6, 10, 12);
   font-weight: bolder;
@@ -277,14 +278,13 @@ export default {
     font-weight: bold;
 }
 #help .sub-desp .question-card1{
-  margin-top: 3%;
-  width:550px;
-  min-width: 550px;
+  margin-top: 2em;
+  width:40em;
+
 }
-#help .sub-desp .question-card1{
-  margin-top: 25%;
-  width:550px;
-  min-width: 550px;
+#help .sub-desp .question-card2{
+  margin-top: 35em;
+  width:40em;
 }
 #help .card .content p{
     font-size: 0.8em;

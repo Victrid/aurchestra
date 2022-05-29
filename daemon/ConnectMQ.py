@@ -11,18 +11,12 @@ from requests import session
 
 # from keyring import delete_password
 # sys.paht.append("..") not working
-sys.path.append(os.path.abspath(os.path.join(os.path.join(os.path.abspath(__file__), os.pardir),os.pardir))
-)
-# for env
-sys.path.append(os.path.abspath(os.path.join(os.path.abspath(__file__),os.pardir)))
-
-
 from MQ import MQSender, makepkg_common
 
 from sqlalchemy import Column,String, create_engine,Integer,VARCHAR, CHAR,Date,TEXT ,ForeignKey
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from env import tableName, connMySQLPara, localTableName, connMyLocalSQLPara, logtableName,connLogPara
+from env import tableName, connMySQLPara, localTableName, connMyLocalSQLPara, logtableName,connLogPara, ConnMQPara
 
 
 
@@ -37,30 +31,29 @@ sender 地址问题
 
 
 # 将地址推入队列
+sender = MQSender.MQSender(connection=ConnMQPara)
 
-def push_path_to_MQ(path):
+def push_path_to_MQ(name, path):
 
     # TODO 
-    sender = MQSender.MQSender(connection="amqp://user:passwd@somehost/somevh")
-
+    
 
     maxerrornumber = 10
     while maxerrornumber:
         maxerrornumber -= 1
         try:
-            pkglist = sender.send(path)  #获取到结果直接返回
+            pkglist = sender.send(name, path)  #获取到结果直接返回
             return pkglist
-        except (makepkg_common.MakepkgTimeoutError
-                ):
+        except makepkg_common.MakepkgTimeoutError as e:
             if maxerrornumber == 0:
-                raise makepkg_common.MakepkgTimeoutError
+                raise e
             continue 
 
-        except makepkg_common.MakepkgRuntimeError:
+        except makepkg_common.MakepkgRuntimeError as e:
             if maxerrornumber==0:
-                raise makepkg_common.MakepkgRuntimeError
+                raise e
             continue
-        
+         
 
 
 '''
@@ -100,7 +93,7 @@ class SFtable(Base):
     address = Column(VARCHAR(255))
     state = Column(Integer)
     email = Column(VARCHAR(255))
-    lastupdateTime = Column(Date)
+    lastupdatetime = Column(Date)
 
 #定义本地的表
 class LocalSFMapPKG(Base):
@@ -119,15 +112,19 @@ class LogTable(Base):
     __tablename__ = logtableName
 
     id = Column(Integer,autoincrement=True ,primary_key=True)
-    name = Column(VARCHAR(255),ForeignKey("softwareInfo.name")) #信息关键词
+    name = Column(VARCHAR(255),ForeignKey("softwareinfo.name")) #信息关键词
     loginfo = Column(TEXT) #具体信息字段
 
+#连接数据库
+engine = create_engine(connMySQLPara)
+#创建表
+Base.metadata.create_all(engine)
 
 #每次修改前端数据库，都加入时间，因为只有成功的才会被显示，所以失败的添加了时间也无所谓
 def modifyDatabase(name, state):
 
     #连接，提供“数据库类型、数据库驱动（就是用的什么库）、用户名、密码、ip、端口、数据库名字”
-    engine = create_engine(connMySQLPara)
+   
     # 创建DBSession类型:
     DBSession = sessionmaker(bind=engine)
 
@@ -136,17 +133,17 @@ def modifyDatabase(name, state):
     #这里只是进行修改
     sf = session.query(SFtable).filter_by(name=name).first()
     sf.state = state
-    sf.lastupdateTime = datetime.now()
+    sf.lastupdatetime = datetime.now()
     session.commit()
     session.close()
+
+    print("modify the state of ", name, " to ", state, " in Web database.")
 
 
 
 
 def deleteFromDatabase(name):
 
-    #连接，提供“数据库类型、数据库驱动（就是用的什么库）、用户名、密码、ip、端口、数据库名字”
-    engine = create_engine(connMySQLPara)
     # 创建DBSession类型:
     DBSession = sessionmaker(bind=engine)
 
@@ -156,16 +153,13 @@ def deleteFromDatabase(name):
     session.query(SFtable).filter_by(name=name).delete()
     session.commit()
     session.close()
+    print("delete ", name, " from the Web database.")
 
 
    
 
 def queryLocalDatabase(name):
     pakgelist = None #记录所有的包名
-
-
-    #连接，提供“数据库类型、数据库驱动（就是用的什么库）、用户名、密码、ip、端口、数据库名字”
-    engine = create_engine(connMyLocalSQLPara)
     # 创建DBSession类型:
     DBSession = sessionmaker(bind=engine)
 
@@ -177,14 +171,13 @@ def queryLocalDatabase(name):
 
     session.close()
 
-    
+
     return pakgelist
 
 
 def deleteLocalDatabase(name):
 
-    #连接，提供“数据库类型、数据库驱动（就是用的什么库）、用户名、密码、ip、端口、数据库名字”
-    engine = create_engine(connMyLocalSQLPara)
+
     # 创建DBSession类型:
     DBSession = sessionmaker(bind=engine)
 
@@ -194,6 +187,7 @@ def deleteLocalDatabase(name):
     session.query(LocalSFMapPKG).filter_by(name=name).delete()
     session.commit()
     session.close()
+    print("delete ", name, " from the Local database.")
 
         
 
@@ -207,8 +201,6 @@ def insertLocalDatabase(name,pkglist):
         pkgliststr += '&'
     pkgliststr = pkgliststr[:-1]
 
-    #连接，提供“数据库类型、数据库驱动（就是用的什么库）、用户名、密码、ip、端口、数据库名字”
-    engine = create_engine(connMyLocalSQLPara)
     # 创建DBSession类型:
     DBSession = sessionmaker(bind=engine)
 
@@ -219,6 +211,7 @@ def insertLocalDatabase(name,pkglist):
     session.add(newItem)
     session.commit()
     session.close()
+    print("insert Local database  for ", name, " and package list: ", pkglist)
 
 
 
@@ -226,8 +219,6 @@ def insertLocalDatabase(name,pkglist):
 def CheckSoftwareVersion(name):
     version = -1
 
-    #连接，提供“数据库类型、数据库驱动（就是用的什么库）、用户名、密码、ip、端口、数据库名字”
-    engine = create_engine(connMyLocalSQLPara)
     # 创建DBSession类型:
     DBSession = sessionmaker(bind=engine)
 
@@ -253,9 +244,6 @@ def updatePkgListLocalDatabase(name,pkgslist):
         pkgliststr += '&'
     pkgliststr = pkgliststr[:-1]
 
-
-    #连接，提供“数据库类型、数据库驱动（就是用的什么库）、用户名、密码、ip、端口、数据库名字”
-    engine = create_engine(connMyLocalSQLPara)
     # 创建DBSession类型:
     DBSession = sessionmaker(bind=engine)
 
@@ -266,15 +254,13 @@ def updatePkgListLocalDatabase(name,pkgslist):
     sf.compilinglist = pkgliststr
     session.commit()
     session.close()
+    print("update Local database for ", name, " and package list: ", pkgslist)
 
 
 
 # 在编译结束后对版本进行更新，如果成功，则用complinglist覆盖pkgslist，并修改version为+1 如果失败，则用pkgslist覆盖compilinglist
 def updateVersionLocalDatabase(name, state): #state = True 成功，state=false 失败
 
-
-    #连接，提供“数据库类型、数据库驱动（就是用的什么库）、用户名、密码、ip、端口、数据库名字”
-    engine = create_engine(connMyLocalSQLPara)
     # 创建DBSession类型:
     DBSession = sessionmaker(bind=engine)
 
@@ -292,10 +278,12 @@ def updateVersionLocalDatabase(name, state): #state = True 成功，state=false 
     session.commit()
     session.close()
 
+    print("insert Local database  for ", name, " and state: ", state)
+
 
 # 写日志到数据库
 def Logger(name, loginfo):
-    engine = create_engine(connLogPara)
+
     DBSession = sessionmaker(bind=engine)
     session=DBSession()
 
@@ -303,6 +291,8 @@ def Logger(name, loginfo):
     session.add(newItem)
     session.commit()
     session.close()
+    print("insert logInfo database" , "name: ", name, " info: ", loginfo)
+
 
 
 

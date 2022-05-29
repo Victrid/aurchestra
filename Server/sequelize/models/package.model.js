@@ -1,7 +1,8 @@
 const { DataTypes } = require('sequelize');
+const moment =require('moment') ;
 
 module.exports = (sequelize) => {
-	sequelize.define('package', {
+	sequelize.define('softwareinfo', {
 		// The following specification of the 'id' attribute could be omitted
 		// since it is the default.
         name:{
@@ -9,7 +10,7 @@ module.exports = (sequelize) => {
             primaryKey: true,
 			type: DataTypes.STRING
         },
-        addr:{
+        address:{
             allowNull: false,
             type: DataTypes.STRING,
         },
@@ -27,6 +28,17 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             validate:{
                 isEmail: true,
+            }
+        },
+        lastupdatetime:{
+            allowNull:true,
+            type: DataTypes.DATE,
+            get(){
+                if(this.getDataValue('lastupdatetime')){
+                    return moment(this.getDataValue('lastupdatetime')).format('YYYY/DD/MM h:mm');   
+                }else{
+                    return '---'
+                }
             }
         }
 	},{

@@ -2,7 +2,7 @@ import traceback
 from ConnectMQ import modifyDatabase, updateVersionLocalDatabase, CheckSoftwareVersion, deleteLocalDatabase, file_remove_readonly, Logger
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-from env import IPDocker, portDocker,pkgs_path
+from env import IPDocker, portDocker,pkgs_path,softwareHubLock
 from loggerWrite import myLogger
 import os
 import shutil
@@ -32,19 +32,18 @@ class myHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
 
-
-
         req_datas = self.rfile.read(int(self.headers['content-length']))
-        self.send_header('Content-type','text/html')
-        self.send_header("Access-Control-Allow-Origin", "http://localhost:8998")
-
-        self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
-
-        self.send_response(201)
+        self.send_response(200, "OK")
+        self.send_header('Content-Type','text/plain')
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
-
+        
+        self.wfile.write(b"OK")
+        self.wfile.close()
+        
 
         res1 = req_datas.decode('utf-8') #解码
+        print("get the information from docker compiled ", res1)
         res = json.loads(res1) #变成字典
 
         if list(res.keys()) != ['name','state','info']:
@@ -64,12 +63,14 @@ class myHandler(BaseHTTPRequestHandler):
                     # 失败，则删除本地文件，同时删除对应的条目
                     if res['state'] == 6: 
                         localpath = os.path.join(pkgs_path,res['name'])
-                        shutil.rmtree(localpath,onerror=file_remove_readonly)
+                        with softwareHubLock:
+                            shutil.rmtree(localpath,onerror=file_remove_readonly)
                         try:
                             deleteLocalDatabase(res['name'])
                         except Exception:
                             #dockerlogger.error("%s" %traceback.format_exc())
                             Logger(res['name'], str(traceback.format_exc()))
+
 
                     # 成功，则需要更新本地数据库中的版本为1
                     if res['state'] == 3: 
@@ -81,6 +82,7 @@ class myHandler(BaseHTTPRequestHandler):
 
                     try:
                         modifyDatabase(res['name'],res['state'])
+                        print("modify the state of ", res['name'], " to ", res['state'])
                     except Exception:
                         Logger(res['name'], str(traceback.format_exc()))
 
@@ -96,9 +98,10 @@ class myHandler(BaseHTTPRequestHandler):
 
                         #回退本地仓库到上一个版本
                         localpath = os.path.join(pkgs_path, res['name'])
-                        newrepo = git.Repo(path=localpath)  # 这样就可以和当前这个分支建立联系
-                        gitt = newrepo.git
-                        gitt.reset('--hard', 'HEAD@{1}')
+                        with softwareHubLock:
+                            newrepo = git.Repo(path=localpath)  # 这样就可以和当前这个分支建立联系
+                            gitt = newrepo.git
+                            gitt.reset('--hard', 'HEAD@{1}')
 
 
                     if res['state'] == 3:
@@ -125,7 +128,7 @@ class myHandler(BaseHTTPRequestHandler):
         self.send_response(201,"ok")
         self.send_header('Content-type','application/json')
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
-        self.send_header('Access-Control-Allow-Origin', "http://localhost:8998")
+        self.send_header('Access-Control-Allow-Origin', "*")
         #self.send_header('*', "http://"+IPDocker+":"+str(portDocker))
         self.end_headers()
             

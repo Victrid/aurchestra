@@ -2,10 +2,13 @@ import os
 import shutil
 import subprocess
 import tempfile
+import json
 from subprocess import run
 from typing import Optional
 
-from .env import default_timeout
+from pika.exceptions import AMQPConnectionError
+
+from .env import default_timeout, current_user_is_root
 from .MQBase import MQBase
 from .makepkg_common import MakepkgRuntimeError, MakepkgTimeoutError, get_pkglist, retrieve_source_tar_path
 
@@ -18,18 +21,21 @@ class MQSender(MQBase):
         # Optional: cleanup cache for old files
         pass
 
-    def send(self, file_path: str, timeout: Optional[int] = None) -> list[str]:
+    def send(self, name: str, file_path: str, timeout: Optional[int] = None) -> list[str]:
         # TODO: return the package list
         # First prepare the file to be sent
         with tempfile.TemporaryDirectory() as tmpdir:
             # copy the file to the temporary directory
             shutil.copytree(file_path, tmpdir, dirs_exist_ok=True)
             file_path = tmpdir
+            os.chmod(file_path, 0o777)
+            os.system('chown -R nobody {}'.format(file_path))
+            print(os.stat(file_path))
             if timeout is None:
                 timeout = default_timeout
             try:
                 makepkg_proc = run(["/usr/bin/makepkg", "-So", "--allsource"], cwd=file_path, capture_output=True,
-                                   text=True, timeout=timeout
+                                   text=True, timeout=timeout, user='nobody' if current_user_is_root else None
                                    )
             except subprocess.TimeoutExpired:
                 # Timed-out process will be killed by Python
@@ -46,10 +52,21 @@ class MQSender(MQBase):
                     f.write(source_file.read())
 
             # Now dispatch the file to the queue
-            self.channel.basic_publish(exchange='',
-                                       routing_key="work_dispatch",
-                                       body=source_base_name.encode()
-                                       )
+            # TODO: update the retry strategy
+            retry = 5
+            while retry:
+                try:
+                    self.channel.basic_publish(exchange='',
+                                               routing_key="work_dispatch",
+                                               body=json.dumps({"name": name, "source": source_base_name}).encode()
+                                               )
+                    retry = 0
+                except AMQPConnectionError:
+                    retry -= 1
+                    self.retry_connection()
+                except Exception as e:
+                    raise e
+
 
             self.clean_cache()
             return get_pkglist(file_path)

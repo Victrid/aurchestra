@@ -72,7 +72,7 @@
                   img(v-bind:src='jiang_avatar_src')
               p#projectname.title.mt-2.mb-0 Weihao Jiang  
                   span.chineseName 蒋圩淏
-              p.motto We conjure the spirits of the computer<br> with our spells.
+              p.motto We conjure the spirits of <br>the computer with our spells.
               div(align='center' style="max-height:4rem;")
                   a.smoothScroll(v-bind:href='jiang_github' target="_blank" rel="noopener noreferrer" style="color:inherit;" )
                       svg.svg-inline--fa.fa-github.fa-w-16.fa-wrapper.small(aria-hidden="true", focusable="false", data-prefix="fab", data-icon="github", role="img", xmlns="http://www.w3.org/2000/svg", viewBox="0 0 496 512",style="height: 3rem; width:3rem;")
@@ -94,7 +94,7 @@
                   img(v-bind:src='xu_avatar_src')
               p#projectname.title.mt-2.mb-0 Zihang Xu  
                   span.chineseName 徐子航
-              p.motto Life is either a daring adventure<br> or nothing at all.
+              p.motto Good good learn, <br>day day up.
               div(align='center' style="max-height:4rem;")
                   a.smoothScroll(v-bind:href='xu_github' target="_blank" rel="noopener noreferrer" style="color:inherit;" )
                       svg.svg-inline--fa.fa-github.fa-w-16.fa-wrapper.small(aria-hidden="true", focusable="false", data-prefix="fab", data-icon="github", role="img", xmlns="http://www.w3.org/2000/svg", viewBox="0 0 496 512",style="height: 3rem; width:3rem;")
@@ -130,8 +130,8 @@ export default {
       tang_avatar_src: 'images/tang.jpg',
     //   
       xu_github:'http://www.baidu.com',
-      xu_words: 'Life is either a daring adventure or nothing at all.',
-      xu_avatar_src: 'https://organicthemes.com/demo/profile/files/2018/05/profile-pic-132x132.jpg',
+      xu_words: 'Good good learn, day day up.',
+      xu_avatar_src: 'images/xu.png',
 
       qing_github:'https://github.com/floudk',
       qing_words:"A hunter of shadows, himself a shade.",

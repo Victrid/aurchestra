@@ -1,5 +1,5 @@
 from subprocess import run
-
+from .env import current_user_is_root
 
 class MakepkgError(Exception):
     pass
@@ -37,6 +37,7 @@ def get_pkglist(working_dir, non_root=True):
     :param working_dir:
     :return: File with absolute paths of packages
     """
+    non_root = not current_user_is_root
     try:
         makepkg_proc = run(["/usr/bin/makepkg", "--packagelist"], cwd=working_dir, capture_output=True, text=True,
                            timeout=60, user=None if non_root else "nobody"
@@ -55,8 +56,9 @@ def get_pkglist(working_dir, non_root=True):
 
 def retrieve_source_tar_path(file_path: str) -> str:
     # TODO: a better way to get the source file name
+    
     source_file_name = run(["/usr/bin/makepkg", "--packagelist"], cwd=file_path, capture_output=True, text=True,
-                           timeout=60,
+                           timeout=60, user='nobody' if current_user_is_root else None
                            ).stdout.split("\n")
     source_file_name = list(filter(lambda x: x.strip() != "", source_file_name))
     if len(source_file_name) < 1:

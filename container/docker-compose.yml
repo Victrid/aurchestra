@@ -1,7 +1,0 @@
-version: '1'
-services:
-  container:
-    build:
-        dockerfile: ./container/Dockerfile
-        context: ../
-    restart: always

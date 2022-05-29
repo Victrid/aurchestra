@@ -4,7 +4,7 @@ import git
 import time
 import os
 from ConnectMQ import push_path_to_MQ,modifyDatabase, updatePkgListLocalDatabase,Logger
-from env import pkgs_path
+from env import pkgs_path,softwareHubLock
 from loggerWrite import myLogger
 import traceback
 
@@ -26,18 +26,21 @@ class CheckUpdateGit(object):
 
         while True:
 
-            try:               
-                path_list = self.check_warehouse_update()
+            try:
+                with softwareHubLock:
+                    path_list = self.check_warehouse_update()
             except Exception:
                 #gitupdatelogger.error("%s" %traceback.format_exc())
                 Logger(None, str(traceback.format_exc()))
             
             else:                
                 for itempath in path_list:
+                    print(os.path.basename(itempath), " need update")
 
                     #state = 2 #默认成功
                     try:
                         pkglist = push_path_to_MQ(itempath)
+                        print("get the package list of", os.path.basename(itempath) , " : ", pkglist)
                     except Exception:
                         #gitupdatelogger.error("%s" %traceback.format_exc())
                         Logger(os.path.basename(itempath), str(traceback.format_exc()))
@@ -66,9 +69,9 @@ class CheckUpdateGit(object):
     def check_warehouse_update(self): #检查本地软件更新情况，返回有更新的软件目录
         HousePathes = self.find_dirs() #得到所有软件包地址
         paths = []                               #本地更新的文件目录地址
-
+        print("check_warehouse_update", HousePathes)
         for housepath in HousePathes:  #轮询所有的仓库地址，检查更新
-
+            
             #网络错误
             newrepo = git.Repo(path=housepath)  #这样就可以和当前这个分支建立联系
             gitt = newrepo.git
@@ -91,6 +94,7 @@ class CheckUpdateGit(object):
     def find_dirs(self):
 
         dirs = []
+
         for dir in os.scandir(pkgs_path):
             if dir.is_dir():
                 dirs.append(dir.path)
