@@ -5,8 +5,6 @@ services:
         context: ../
         dockerfile: ./Dockerfile/Repository.dockerfile
     restart: always
-    ports:
-      - "6000:80"
     depends_on:
       db:
         condition: service_healthy
@@ -37,7 +35,7 @@ services:
 #      - "21100-21110:21100-21110"
 
   rabbitmq:
-    image: rabbitmq:3.9-management
+    image: rabbitmq:latest
     restart: always
     environment:
       RABBITMQ_DEFAULT_USER: admin
@@ -92,9 +90,6 @@ services:
       ADMIN_ACCOUNT: "admin"
       ADMIN_PASSWORD: "test"
       DAEMON_CONNECTION: "http://daemon:8880"
-
-    ports:
-      - "8081:80"
       
   daemon:
     build:
@@ -136,6 +131,16 @@ services:
       DAEMON_SERVER: "http://daemon:8881"
       REPO_SERVER: "http://repo"
       DEFAULT_TIMEOUT: 3600
+      
+  gateway:
+    build:
+        dockerfile: ./Dockerfile/Gateway.dockerfile
+        context: ../
+    depends_on:
+        - web
+        - repo
+    ports:
+        - "80:80"
 #volumes:
 #  repostorage:
 #  ftpstorage:
