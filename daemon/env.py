@@ -47,5 +47,7 @@ logConfigPath = os.getenv('LogConfigPath',logconfpath)
 # 检查更新时间间隔
 updateInterval = os.getenv('UPDATA_Interval', '30')
 
+repoaddr = os.getenv("REPO_ADDR", 'http://127.0.0.1')
+
 softwareHubLock = Lock()
 

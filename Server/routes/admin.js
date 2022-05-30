@@ -65,10 +65,11 @@ async function get_package(req,res) {
   });
   var checkedStr=JSON.stringify(checked,null,2);
   const checkedJson = JSON.parse(checkedStr)
-  //- 1: 等待编译 - 2: 编译完成
+  //- 1: 等待编译 - 2: 编译中
+  //- 3:编译完成
   //- 6: 编译错误 - 7: 等待删除
   // 1 2 
-  var states = [1,2]
+  var states = [1,2,3]
   var existedJson = [];
   for (const i in states){
     // console.log(states[i])

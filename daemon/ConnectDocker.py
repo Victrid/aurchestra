@@ -2,11 +2,13 @@ import traceback
 from ConnectMQ import modifyDatabase, updateVersionLocalDatabase, CheckSoftwareVersion, deleteLocalDatabase, file_remove_readonly, Logger
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-from env import IPDocker, portDocker,pkgs_path,softwareHubLock
+from urllib.parse import urljoin
+from env import IPDocker, portDocker,pkgs_path,softwareHubLock, repoaddr
 from loggerWrite import myLogger
 import os
 import shutil
 import git
+import requests
 
 '''
 功能：
@@ -38,13 +40,15 @@ class myHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         
-        self.wfile.write(b"OK")
-        self.wfile.close()
+        #self.wfile.write(b"OK")
+        #self.wfile.close()
         
 
         res1 = req_datas.decode('utf-8') #解码
         print("get the information from docker compiled ", res1)
         res = json.loads(res1) #变成字典
+
+        requests.put(urljoin(repoaddr, "api/repository"))
 
         if list(res.keys()) != ['name','state','info']:
             print("format error")
@@ -75,6 +79,7 @@ class myHandler(BaseHTTPRequestHandler):
                     # 成功，则需要更新本地数据库中的版本为1
                     if res['state'] == 3: 
                         try:
+                            # requests.put(urljoin(repoaddr, "api/repository"))
                             updateVersionLocalDatabase(res['name'], True)
                         except Exception:
                             #dockerlogger.error("%s" %traceback.format_exc())
@@ -106,6 +111,7 @@ class myHandler(BaseHTTPRequestHandler):
 
                     if res['state'] == 3:
                         try:
+                            # requests.put(urljoin(repoaddr, "api/repository"))
                             updateVersionLocalDatabase(res['name'], True)
                         except Exception:
                             Logger(res['name'], str(traceback.format_exc()))

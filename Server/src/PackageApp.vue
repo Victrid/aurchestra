@@ -20,7 +20,7 @@ table.table.striped
           td(v-bind:class="getState(item.state)") {{item.state}}
           td.time {{item.lastupdatetime}}
 #help
-  h1.headline-6(style="color:white" align='center') Manaual
+  h1.headline-6(style="color:white" align='center') Manual
   .desp
       p Here is a manual to help you understand and use 
         span.sign Aurchestra.
@@ -31,8 +31,8 @@ table.table.striped
         .content
             p If a package needed can not be found in the corresponding OS page, 
                 span you can click the&nbsp
-                span.apply-btn  APPLY 
-                span &nbsp button in the uppre right corner to submit a new package compilation request.
+                span.apply-btn  Request 
+                span &nbsp button in the upper right corner to submit a new package compilation request.
             p Once checked by admin, it will be added into page together with its current state.
             p However, it is not available for installing until the compilation is complete, 
                 span which can be comfirmed if the state shows "
@@ -42,7 +42,11 @@ table.table.striped
         div(class="card__header")
             p.font-bold How to configure in Arch Operating System?
         .content
-            p.tbd TBD...
+            p Add these lines after the /etc/pacman.conf:
+            p 
+              pre [Aurchestra]
+                p  SigLevel = Optional TrustAll
+                p  Server = http://aur.sjtucs.com/repo
 //- 
 div.card.animated.bounceIn(v-if="is_open" @close="close()")
   div.card__header
@@ -285,10 +289,12 @@ export default {
 #help .sub-desp .question-card2{
   margin-top: 35em;
   width:40em;
+  margin-bottom: 20em;
 }
 #help .card .content p{
     font-size: 0.8em;
     line-height: 1.2em;
+    
 }
 #help .apply-btn{
     color:rgb(192, 112, 0);

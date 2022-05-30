@@ -10,7 +10,8 @@ services:
         condition: service_healthy
     volumes:
 #      -  repostorage:/var/www/aurchestra
-      -  /home/victrid/test.gpg:/etc/aurchestra/private.key
+      # -  /home/victrid/test.gpg:/etc/aurchestra/private.key
+      -  /home/floudk/test.gpg:/etc/aurchestra/private.key
     environment:
       AURCHESTRA_DB_CONNECTION: "postgresql+psycopg2://exampleuser:examplepassword@db/repo"
       AURCHESTRA_MV_PATH: "/bin/mv"
@@ -106,7 +107,8 @@ services:
       CONNECT_LOCAL_MYSQL_PARAMETER: "postgresql+psycopg2://exampleuser:examplepassword@db/web"
       CONNECT_LOG_PARAMETER: "postgresql+psycopg2://exampleuser:examplepassword@db/web"
       Address_for_MQ: 'amqp://admin:test@rabbitmq/%2F'
-      UPDATA_Interval: '30'
+      UPDATA_Interval: '600'
+      REPO_ADDR: "http://repo"
       FTP_USER: admin
       FTP_PASS: test
       FTP_PORT: 21
@@ -140,7 +142,7 @@ services:
         - web
         - repo
     ports:
-        - "80:80"
+        - "6000:80"
 #volumes:
 #  repostorage:
 #  ftpstorage:
